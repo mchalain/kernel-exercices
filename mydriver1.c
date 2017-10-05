@@ -18,23 +18,36 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
+unsigned char my_buffer[256];
+unsigned int my_length = 0;
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: read()\n");
+	int length = my_length;
 
-	count = 0;
+	length = (length > count)? count: length;
+	copy_to_user(buf, my_buffer + *ppos, length);
+	my_length -= length;
+	printk(KERN_INFO "my char driver: read(%s, %d)\n", my_buffer + *ppos, length);
+	count = length;
 	*ppos += count;
 	return count;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: write()\n");
+	int length = 256;
 
-	*ppos += count;
+	length -= *ppos;
+	length = (length > count)? count: length;
+	copy_from_user(my_buffer + *ppos, buf, length);
+	my_length += length;
+	printk(KERN_INFO "my char driver: write(%s,%d)\n", my_buffer, my_length);
+	*ppos += count - my_length;
+	if (*ppos > 256)
+		*ppos %= 256;
 	return count;
 }
 
