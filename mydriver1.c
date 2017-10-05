@@ -11,10 +11,12 @@ MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
-#define MY_MAJOR 60
 /*
  * Arguments
  */
+static short int my_major = 60;
+module_param(my_major, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(my_major, "The major device number");
 
 /*
  * File operations
@@ -71,23 +73,23 @@ static int __init my_init(void)
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
 
-	ret = cdev_add(&my_cdev, MKDEV(MY_MAJOR, 0), 1);
+	ret = cdev_add(&my_cdev, MKDEV(my_major, 0), 1);
 	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
-	ret = register_chrdev_region(MKDEV(MY_MAJOR, 0), 1, "/dev/mydriver");
+	ret = register_chrdev_region(MKDEV(my_major, 0), 1, "/dev/mydriver");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
 
-	device = device_create(my_class, NULL, MKDEV(MY_MAJOR, 0), NULL, "mydriver");
+	device = device_create(my_class, NULL, MKDEV(my_major, 0), NULL, "mydriver");
 	
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-  device_destroy(my_class, MKDEV(MY_MAJOR, 0));
+  device_destroy(my_class, MKDEV(my_major, 0));
   cdev_del(&my_cdev);
   class_destroy(my_class);
-	unregister_chrdev_region(MKDEV(MY_MAJOR, 0), 1);
+	unregister_chrdev_region(MKDEV(my_major, 0), 1);
 }
 
 /*
