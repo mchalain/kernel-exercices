@@ -14,9 +14,7 @@ MODULE_LICENSE("GPL");
 /*
  * Arguments
  */
-static short int my_major = 60;
-module_param(my_major, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-MODULE_PARM_DESC(my_major, "The major device number");
+static short int my_major = 0;
 
 /*
  * File operations
@@ -67,8 +65,14 @@ static int __init my_init(void)
 {
 	int ret;
 	struct device *device = NULL;
+	dev_t dev = 0;
 
 	my_class = class_create(THIS_MODULE, "mydrivers");
+
+	ret = alloc_chrdev_region(&dev, 0, 1, "mydriver");
+	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
+
+	my_major = MAJOR(dev);
 
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
@@ -76,8 +80,6 @@ static int __init my_init(void)
 	ret = cdev_add(&my_cdev, MKDEV(my_major, 0), 1);
 	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
-	ret = register_chrdev_region(MKDEV(my_major, 0), 1, "/dev/mydriver");
-	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
 
 	device = device_create(my_class, NULL, MKDEV(my_major, 0), NULL, "mydriver");
 	
