@@ -15,54 +15,62 @@ MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
+#define BCM2708_PERI_BASE        0x20000000
+#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controler */
+
+// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) 
+// or SET_GPIO_ALT(x,y)
+#define INP_GPIO(addr,g) *((addr)+((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(addr,g) *((addr)+((g)/10)) |=  (1<<(((g)%10)*3))
+
+#define GPIO_SET(gpio) *((gpio)+7)  // sets   bits which are 1 ignores bits which are 0
+#define GPIO_CLR(gpio) *((gpio)+10) // clears bits which are 1 ignores bits which are 0
+// For GPIO# >= 32 (RPi B+)
+#define GPIO_SET_EXT(gpio) *(gpio+8)  // sets   bits which are 1 ignores bits which are 0
+#define GPIO_CLR_EXT(gpio) *(gpio+11) // clears bits which are 1 ignores bits which are 0
+
 /*
  * Arguments
  */
 static short int my_minor = 0;
 
-uint32_t my_value;
-unsigned char my_buffer[256];
-unsigned int my_length = 0;
+unsigned long *my_virtaddr;
+
+static int gpio_nr = 16;
+
+module_param(gpio_nr, int, 0644);
+
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	int length = my_length;
-
-	length = (length > count)? count: length;
-	copy_to_user(buf, my_buffer + *ppos, length);
-	my_length -= length;
-	printk(KERN_INFO "my char driver: read(%s, %d)\n", my_buffer + *ppos, length);
-	count = length;
+	count = 0;
 	*ppos += count;
 	return count;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	int length = 256;
-
-	length -= *ppos;
-	length = (length > count)? count: length;
-	copy_from_user(my_buffer + *ppos, buf, length);
-	my_length += length;
-	printk(KERN_INFO "my char driver: write(%s,%d)\n", my_buffer, my_length);
-	*ppos += count - my_length;
-	if (*ppos > 256)
-		*ppos %= 256;
+	count = 0;
 	return count;
 }
 
 static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	if (cmd == MYIO_SET) {
-		my_value = arg;
-		printk(KERN_INFO "my char driver: ioctl(%X)\n", arg);
+	if (cmd == RPI_GPIO_SET)
+	{
+		if (gpio_nr >= 32)
+			GPIO_SET_EXT(my_virtaddr) = (1 << (gpio_nr % 32));
+		else
+			GPIO_SET(my_virtaddr) = (1 << gpio_nr);
 	}
-	if (cmd == MYIO_GET) {
-		*(uint32_t *)arg = my_value;
-		printk(KERN_INFO "my char driver: ioctl(%X)\n", *(uint32_t *)arg);
+	else if (cmd == RPI_GPIO_CLEAR)
+	{
+		if (gpio_nr >= 32)
+			GPIO_CLR_EXT(my_virtaddr) = (1 << (gpio_nr % 32));
+		else
+			GPIO_CLR(my_virtaddr) = (1 << gpio_nr);
 	}
 	return 0;
 }
@@ -71,6 +79,7 @@ static int my_open(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: open()\n");
 
+	OUT_GPIO(my_virtaddr, gpio_nr);
 	return 0;
 }
 
@@ -93,12 +102,17 @@ static struct file_operations my_fops = {
 static int __init my_init(void)
 {
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
+	if ((my_virtaddr = ioremap (GPIO_BASE, PAGE_SIZE)) == NULL) {
+		printk(KERN_ERR "Can't map GPIO addr !\n");
+		return -1;
+	}
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
 	myclass_unregister(my_minor);
+	iounmap (my_virtaddr);
 }
 
 /*
