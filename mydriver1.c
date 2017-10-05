@@ -15,6 +15,9 @@ MODULE_LICENSE("GPL");
  * Arguments
  */
 static short int my_major = 0;
+static short int my_minor_range = 3;
+module_param(my_minor_range, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(my_minor_range, "The range of minor device number");
 
 /*
  * File operations
@@ -58,7 +61,7 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
-static struct cdev my_cdev;
+static struct cdev my_cdev[10];
 static struct class *my_class = NULL;
 
 static int __init my_init(void)
@@ -66,32 +69,43 @@ static int __init my_init(void)
 	int ret;
 	struct device *device = NULL;
 	dev_t dev = 0;
+	int i;
 
+	my_minor_range = (my_minor_range > 10)?10:my_minor_range;
 	my_class = class_create(THIS_MODULE, "mydrivers");
 
-	ret = alloc_chrdev_region(&dev, 0, 1, "mydriver");
-	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
+	ret = alloc_chrdev_region(&dev, 0, my_minor_range, "mydrivers");
+	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
 
 	my_major = MAJOR(dev);
 
-	cdev_init(&my_cdev, &my_fops);
-	my_cdev.owner = THIS_MODULE;
+	for (i = 0; i < my_minor_range; i++)
+	{
+		dev_t devno = MKDEV(my_major, i);
+		cdev_init(&my_cdev[i], &my_fops);
+		my_cdev[i].owner = THIS_MODULE;
 
-	ret = cdev_add(&my_cdev, MKDEV(my_major, 0), 1);
-	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
+		ret = cdev_add(&my_cdev[i], devno, 1);
+		if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
-
-	device = device_create(my_class, NULL, MKDEV(my_major, 0), NULL, "mydriver");
+		device = device_create(my_class, NULL, devno, NULL, "mydriver%d", i);
+	}
 	
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-  device_destroy(my_class, MKDEV(my_major, 0));
-  cdev_del(&my_cdev);
+	int i;
+	for (i = 0; i < my_minor_range; i++)
+	{
+		dev_t devno = MKDEV(my_major, i);
+
+		device_destroy(my_class, devno);
+		cdev_del(&my_cdev[i]);
+	}
   class_destroy(my_class);
-	unregister_chrdev_region(MKDEV(my_major, 0), 1);
+	unregister_chrdev_region(MKDEV(my_major, 0), my_minor_range);
 }
 
 /*
