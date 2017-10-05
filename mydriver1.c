@@ -6,8 +6,10 @@
 #include <linux/fs.h>           /* file_operations */
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/uaccess.h>
 
 #include "myclass.h"
+#include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -18,6 +20,7 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
+uint32_t my_value;
 unsigned char my_buffer[256];
 unsigned int my_length = 0;
 /*
@@ -51,6 +54,19 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 	return count;
 }
 
+static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	if (cmd == MYIO_SET) {
+		my_value = arg;
+		printk(KERN_INFO "my char driver: ioctl(%X)\n", arg);
+	}
+	if (cmd == MYIO_GET) {
+		*(uint32_t *)arg = my_value;
+		printk(KERN_INFO "my char driver: ioctl(%X)\n", *(uint32_t *)arg);
+	}
+	return 0;
+}
+
 static int my_open(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: open()\n");
@@ -71,6 +87,7 @@ static struct file_operations my_fops = {
 	.write =	my_write,
 	.open =		my_open,
 	.release =	my_release,
+	.unlocked_ioctl = my_ioctl,
 };
 
 static int __init my_init(void)
