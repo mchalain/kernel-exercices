@@ -72,6 +72,13 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		else
 			GPIO_CLR(my_virtaddr) = (1 << gpio_nr);
 	}
+	else if (cmd == RPI_GPIO_GET)
+	{
+		if (gpio_nr >= 32)
+			*(uint32_t *)arg = GPIO_CLR_EXT(my_virtaddr);
+		else
+			*(uint32_t *)arg = GPIO_CLR(my_virtaddr);
+	}
 	return 0;
 }
 
