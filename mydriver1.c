@@ -6,6 +6,7 @@
 #include <linux/fs.h>           /* file_operations */
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/uaccess.h>
 
 #include "myclass.h"
 
