@@ -1,28 +1,18 @@
 Exercice 1 :
-Compiler le module :
+Compiler les modules :
  > make
-Le charger :
+Charger le premier module :
  > sudo insmod mydriver1.ko
-Visualiser son chargement :
- > lsinfo
-Visualiser son action :
- > sudo dmesg -c
-Le décharger":
- > sudo rmmod mydriver1
-Visualiser son action :
- > sudo dmesg -c
-Visualiser les informations du driver :
- > modinfo mydriver1.ko
-Installer le driver :
- > make modules_install
-Visualiser son installation :
- > ls /lib/modules/$(uname -r)/extra
-Visualiser ses dépendances :
- > cat /lib/modules/$(uname -r)/modules.dep
+Charger le deuxième module :
+ > sudo insmod mydriver2.ko
+Ajouter la ligne EXPORT_SYMBOL_GPL dans mydriver1.ko.
+Recompiler les modules :
+ > make
+Charger les deux modules dans l'ordre :
+ > sudo insmod mydriver1.ko
+ > sudo insmod mydriver2.ko
 
 Exercice 2:
- Créer une fonction "mydriver1_print" dans le modules qui affiche "Enter in a function of mydriver1"
- Créer un deuxième module.
- Appeler la fonction "mydriver1_print" depuis le deuxième module.
+ Créer un module "myclass" avec les fonctions myclass_register et myclass_unregister.
 
- continuer avec git checkout module.2
+ continuer avec git checkout poo.1
