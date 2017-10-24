@@ -4,7 +4,9 @@
 #include <linux/kernel.h>	/* printk() */
 #include <linux/module.h>	/* modules */
 
-MODULE_DESCRIPTION("mydriver1");
+#include "mydriver1.h"
+
+MODULE_DESCRIPTION("mydriver2");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
@@ -12,17 +14,12 @@ MODULE_LICENSE("GPL");
  * Arguments
  */
 
-int mydriver1_print(void)
-{
-	printk(KERN_INFO"Enter in a function of mydriver1\n");
-	return 0;
-}
-
 /*
  * Modules initialization
  */
 static int __init my_init(void)
 {
+	mydriver1_print();
 	return 0;
 }
 
