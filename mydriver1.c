@@ -17,6 +17,7 @@ int mydriver1_print(void)
 	printk(KERN_INFO"Enter in a function of mydriver1\n");
 	return 0;
 }
+EXPORT_SYMBOL(mydriver1_print);
 
 /*
  * Modules initialization
