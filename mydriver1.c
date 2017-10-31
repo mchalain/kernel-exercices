@@ -6,6 +6,7 @@
 #include <linux/fs.h>           /* file_operations */
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/slab.h>
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -16,12 +17,18 @@ MODULE_LICENSE("GPL");
  */
 static short int my_major = 0;
 
+struct mydriver_data_s
+{
+	int minor;
+};
+
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: read()\n");
+	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
+	printk(KERN_INFO "my char driver: read(%d)\n", data->minor);
 
 	count = 0;
 	*ppos += count;
@@ -30,7 +37,8 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: write()\n");
+	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
+	printk(KERN_INFO "my char driver: write(%d)\n", data->minor);
 
 	*ppos += count;
 	return count;
@@ -38,13 +46,18 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 
 static int my_open(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "my char driver: open()\n");
-
+	int minor = iminor(inode);
+	printk(KERN_INFO "my char driver: open(%d)\n",minor);
+	struct mydriver_data_s *data = kmalloc(sizeof(*data), GFP_KERNEL);
+	data->minor = minor;
+	file->private_data = data;
 	return 0;
 }
 
 static int my_release(struct inode *inode, struct file *file)
 {
+	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
+	kfree(data);
 	printk(KERN_INFO "my char driver: release()\n");
 
 	return 0;
@@ -69,7 +82,7 @@ static int __init my_init(void)
 
 	my_class = class_create(THIS_MODULE, "mydrivers");
 
-	ret = alloc_chrdev_region(&dev, 0, 1, "mydriver");
+	ret = alloc_chrdev_region(&dev, 0, 10, "mydriver");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
 	my_major = MAJOR(dev);
@@ -77,21 +90,27 @@ static int __init my_init(void)
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
 
-	ret = cdev_add(&my_cdev, MKDEV(my_major, 0), 1);
-	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
+	int i;
+	for (i = 0; i < 10; i++)
+	{
+		ret = cdev_add(&my_cdev, MKDEV(my_major, i), 1);
+		if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
-
-	device = device_create(my_class, NULL, MKDEV(my_major, 0), NULL, "mydriver");
-	
+		device = device_create(my_class, NULL, MKDEV(my_major, i), NULL, "mydriver%d", i);
+	}
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-  device_destroy(my_class, MKDEV(my_major, 0));
-  cdev_del(&my_cdev);
-  class_destroy(my_class);
-	unregister_chrdev_region(MKDEV(my_major, 0), 1);
+	int i;
+	for (i = 0; i < 10; i++)
+	{
+		device_destroy(my_class, MKDEV(my_major, i));
+		unregister_chrdev_region(MKDEV(my_major, i), 1);
+	}
+	cdev_del(&my_cdev);
+	class_destroy(my_class);
 }
 
 /*
