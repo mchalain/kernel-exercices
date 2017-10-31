@@ -9,7 +9,7 @@ KBUILD_EXTRA_SYMBOLS=$(KDIR)/Module.symvers
 obj-m += mydriver1.o
 obj-m += myclass.o
 
-all:
+all: myapp
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) modules
 
 install:
