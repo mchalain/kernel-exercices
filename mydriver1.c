@@ -60,17 +60,19 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	if (cmd == RPI_GPIO_SET)
 	{
-		if (gpio_nr >= 32)
-			GPIO_SET_EXT(my_virtaddr) = (1 << (gpio_nr % 32));
+		short gpio = (short) arg;
+		if (gpio >= 32)
+			GPIO_SET_EXT(my_virtaddr) = (1 << (gpio % 32));
 		else
-			GPIO_SET(my_virtaddr) = (1 << gpio_nr);
+			GPIO_SET(my_virtaddr) = (1 << gpio);
 	}
 	else if (cmd == RPI_GPIO_CLEAR)
 	{
-		if (gpio_nr >= 32)
-			GPIO_CLR_EXT(my_virtaddr) = (1 << (gpio_nr % 32));
+		short gpio = (short) arg;
+		if (gpio >= 32)
+			GPIO_CLR_EXT(my_virtaddr) = (1 << (gpio % 32));
 		else
-			GPIO_CLR(my_virtaddr) = (1 << gpio_nr);
+			GPIO_CLR(my_virtaddr) = (1 << gpio);
 	}
 	else if (cmd == RPI_GPIO_GET)
 	{
