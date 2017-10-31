@@ -36,7 +36,18 @@ Génération automatique du majeur du pilote par le kernel.
 
 chardriver.4 :
 ------------
-Version intermédiaire avec une compilation de chardriver.2 et chardriver.3
+Passage d'informations entre "open", "read",...  
+Parler de la structure "inode" et "file", comme étant une description
+du fichier dans le FS du disque dure et dans le VFS.  
+Parler des besoins des drivers sur le stockage d'information et la différenciation ente les fichiers.
+
+chardriver.5 :
+------------
+Version finale de chardriver avec allocation de données.
+Parler de l'allocation mémoire dynamique. (*note* :j'ai comme affirmation
+qu'il était préferrable de faire de l'allocation statique, parler de l'allocation
+statique pour tous les drivers de Linux et de la place occupée,
+parler de PreemptRT de l'allocation dynamique seulement au chargement du pilote).
 
 poo.1 :
 ------
