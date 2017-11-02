@@ -18,46 +18,21 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
-/*
- * File operations
- */
-static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
+static int my_funcr(void *arg)
 {
-	printk(KERN_INFO "my char driver: read()\n");
-
-	count = 0;
-	*ppos += count;
-	return count;
-}
-
-static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
-{
-	printk(KERN_INFO "my char driver: write()\n");
-
-	*ppos += count;
-	return count;
-}
-
-static int my_open(struct inode *inode, struct file *file)
-{
-	printk(KERN_INFO "my char driver: open()\n");
-
+	pr_info("hello read\n");
 	return 0;
 }
 
-static int my_release(struct inode *inode, struct file *file)
+static int my_funcw(void *arg)
 {
-	printk(KERN_INFO "my char driver: release()\n");
-
+	pr_info("hello write\n");
 	return 0;
 }
 
-static struct file_operations my_fops = {
-	.owner =	THIS_MODULE,
-	.read =		my_read,
-	.write =	my_write,
-	.open =		my_open,
-	.release =	my_release,
+static struct myclass_s my_fops = {
+	.funcw =		my_funcw,
+	.funcr =		my_funcr,
 };
 
 static int __init my_init(void)

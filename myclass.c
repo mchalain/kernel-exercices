@@ -7,6 +7,8 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 
+#include "myclass.h"
+
 MODULE_DESCRIPTION("myclass");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
@@ -22,14 +24,61 @@ MODULE_PARM_DESC(my_minor_range, "The range of minor device number");
 
 static struct cdev my_cdev[10];
 static struct class *my_class = NULL;
+static struct myclass_s *myclass[10];
 
-int myclass_register(struct file_operations *fops, char *name, void *arg)
+/*
+ * File operations
+ */
+static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
+{
+	struct myclass_s *class = (struct myclass_s *)file->private_data;
+	printk(KERN_INFO "my char driver: read()\n");
+	class->funcr(class->arg);
+
+	count = 0;
+	*ppos += count;
+	return count;
+}
+
+static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
+{
+	struct myclass_s *class = (struct myclass_s *)file->private_data;
+	class->funcw(class->arg);
+	*ppos += count;
+	return count;
+}
+
+static int my_open(struct inode *inode, struct file *file)
+{
+	file->private_data = myclass[iminor(inode)];
+	printk(KERN_INFO "my char driver: open()\n");
+
+	return 0;
+}
+
+static int my_release(struct inode *inode, struct file *file)
+{
+	printk(KERN_INFO "my char driver: release()\n");
+
+	return 0;
+}
+
+static struct file_operations my_fops = {
+	.owner =	THIS_MODULE,
+	.read =		my_read,
+	.write =	my_write,
+	.open =		my_open,
+	.release =	my_release,
+};
+
+int myclass_register(struct myclass_s *fops, char *name, void *arg)
 {
 	struct device *device = NULL;
 	int ret;
 	dev_t devno = MKDEV(my_major, my_minor_last);
-	cdev_init(&my_cdev[my_minor_last], fops);
+	cdev_init(&my_cdev[my_minor_last], &my_fops);
 	my_cdev[my_minor_last].owner = THIS_MODULE;
+	myclass[my_minor_last] = fops;
 
 	pr_info("myclass_register %s",name);
 	ret = cdev_add(&my_cdev[my_minor_last], devno, 1);
