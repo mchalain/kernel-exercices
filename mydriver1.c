@@ -7,7 +7,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 
-#include "myclass.h"
+#include <linux/miscdevice.h>
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -16,7 +16,6 @@ MODULE_LICENSE("GPL");
 /*
  * Arguments
  */
-static short int my_minor = 0;
 
 /*
  * File operations
@@ -60,15 +59,21 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
+static struct miscdevice mymisc;
+
 static int __init my_init(void)
 {
-	my_minor = myclass_register(&my_fops, "mydriver", NULL);
+	mymisc.minor = MISC_DYNAMIC_MINOR;
+	mymisc.name = "mydriver";
+	mymisc.fops = &my_fops;
+
+	misc_register(&mymisc);
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-	myclass_unregister(my_minor);
+	misc_deregister(&mymisc);
 }
 
 /*
