@@ -22,11 +22,13 @@ static struct miscdevice mymisc;
 static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
 
+static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
 static int clic = 0;
 static irqreturn_t my_irq_handler(int irq, void * ident)
 {
 	/* Schedule the tasklet */
 	clic ++;
+	wake_up(&irq_wait_queue);
 	return IRQ_HANDLED;
 }
 
@@ -35,7 +37,10 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
+	while (clic == 0)
+		wait_event_interruptible(irq_wait_queue, clic);
 	count = sprintf(buf, "%d\n", clic);
+	clic = 0;
 	*ppos += count;
 	return count;
 }
@@ -48,14 +53,16 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 
 static int my_open(struct inode *inode, struct file *file)
 {
+	int ret;
 	printk(KERN_INFO "my char driver: open()\n");
-	clic = 0;
-	return 0;
+	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
+	return ret;
 }
 
 static int my_release(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: release()\n");
+	free_irq(gpio_to_irq(gpio_nr), THIS_MODULE->name);
 
 	return 0;
 }
@@ -79,7 +86,6 @@ static int __init my_init(void)
 
 	ret = gpio_request(gpio_nr, THIS_MODULE->name);
 	ret = gpio_direction_input(gpio_nr);
-	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
 	if (ret)
 		pr_info("error\n");
 	return 0;
@@ -87,7 +93,6 @@ static int __init my_init(void)
 
 static void __exit my_exit(void)
 {
-	free_irq(gpio_to_irq(gpio_nr), THIS_MODULE->name);
 	gpio_free(gpio_nr);
 	misc_deregister(&mymisc);
 }

@@ -1,0 +1,16 @@
+Exercice 1:
+ Compiler le driver:
+ > make
+ Mettre une résistance sur le 3.3V.
+ Mettre un fil sur le GPIO 21.
+ Insérer le module:
+ > sudo insmod mysdriver1.ko
+ Ouvrir le fichier device:
+ > sudo cat /dev/mydriver
+ Faire toucher le fil et la rśesistance par intermitence. 
+
+Exercice 2:
+ Utiliser les spinlock pour que la variable ne soit pas mis à jour pendant une lecture du fichier device.
+
+ trouver la solution avec git checkout irq.2
+
