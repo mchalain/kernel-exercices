@@ -4,14 +4,11 @@
 #include <linux/kernel.h>	/* printk() */
 #include <linux/module.h>	/* modules */
 #include <linux/fs.h>           /* file_operations */
-#include <linux/cdev.h>
+#include <linux/miscdevice.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
-
-#include "myclass.h"
-#include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -20,12 +17,10 @@ MODULE_LICENSE("GPL");
 /*
  * Arguments
  */
-static short int my_minor = 0;
+static struct miscdevice mymisc;
 
 static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
-
-static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
 
 static int clic = 0;
 static irqreturn_t my_irq_handler(int irq, void * ident)
@@ -40,7 +35,6 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	int value;
 	count = sprintf(buf, "%d\n", clic);
 	*ppos += count;
 	return count;
@@ -77,7 +71,12 @@ static struct file_operations my_fops = {
 static int __init my_init(void)
 {
 	int ret = 0;
-	my_minor = myclass_register(&my_fops, "mydriver", NULL);
+
+	mymisc.minor = MISC_DYNAMIC_MINOR;
+	mymisc.name = "mydriver";
+	mymisc.fops = &my_fops;
+	ret = misc_register(&mymisc);
+
 	ret = gpio_request(gpio_nr, THIS_MODULE->name);
 	ret = gpio_direction_input(gpio_nr);
 	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
@@ -90,7 +89,7 @@ static void __exit my_exit(void)
 {
 	free_irq(gpio_to_irq(gpio_nr), THIS_MODULE->name);
 	gpio_free(gpio_nr);
-	myclass_unregister(my_minor);
+	misc_deregister(&mymisc);
 }
 
 /*
