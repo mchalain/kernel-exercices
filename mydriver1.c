@@ -21,10 +21,7 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
-unsigned long *my_virtaddr;
-
 static int gpio_nr = 16;
-
 module_param(gpio_nr, int, 0644);
 
 /*
@@ -32,7 +29,8 @@ module_param(gpio_nr, int, 0644);
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	count = 0;
+	int value = gpio_get_value(gpio_nr);
+	count = sprintf(buf, "%d\n", value);
 	*ppos += count;
 	return count;
 }
@@ -41,29 +39,6 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 {
 	count = 0;
 	return count;
-}
-
-static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	if (cmd == RPI_GPIO_SET)
-	{
-		short gpio = gpio_nr;
-		if (arg)
-			gpio = (short) arg;
-		gpio_set_value(gpio, 1);
-	}
-	else if (cmd == RPI_GPIO_CLEAR)
-	{
-		short gpio = gpio_nr;
-		if (arg)
-			gpio = (short) arg;
-		gpio_set_value(gpio, 0);
-	}
-	else if (cmd == RPI_GPIO_GET)
-	{
-		*(uint32_t *)arg = gpio_get_value(gpio_nr);
-	}
-	return 0;
 }
 
 static int my_open(struct inode *inode, struct file *file)
@@ -86,14 +61,13 @@ static struct file_operations my_fops = {
 	.write =	my_write,
 	.open =		my_open,
 	.release =	my_release,
-	.unlocked_ioctl = my_ioctl,
 };
 
 static int __init my_init(void)
 {
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
 	gpio_request(gpio_nr, THIS_MODULE->name);
-	gpio_direction_output(gpio_nr,1);
+	gpio_direction_input(gpio_nr);
 	return 0;
 }
 
