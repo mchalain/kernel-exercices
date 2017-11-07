@@ -8,6 +8,7 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/gpio.h>
+#include <linux/interrupt.h>
 
 #include "myclass.h"
 #include "mydriver1.h"
@@ -24,12 +25,27 @@ static short int my_minor = 0;
 static int gpio_nr = 16;
 module_param(gpio_nr, int, 0644);
 
+static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
+
+static int clic = 0;
+static irqreturn_t my_irq_handler(int irq, void * ident)
+{
+	/* Schedule the tasklet */
+	clic ++;
+	wake_up_interruptible (&irq_wait_queue);
+	return IRQ_HANDLED;
+}
+
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	int value = gpio_get_value(gpio_nr);
+	int value;
+	while (clic == 0)
+		wait_event_interruptible(irq_wait_queue, clic);
+	clic= 0;
+	value = gpio_get_value(gpio_nr);
 	count = sprintf(buf, "%d\n", value);
 	*ppos += count;
 	return count;
@@ -68,6 +84,7 @@ static int __init my_init(void)
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
 	gpio_request(gpio_nr, THIS_MODULE->name);
 	gpio_direction_input(gpio_nr);
+	request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
 	return 0;
 }
 
