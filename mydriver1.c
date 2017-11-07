@@ -7,6 +7,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
+#include <linux/gpio.h>
 
 #include "myclass.h"
 #include "mydriver1.h"
@@ -14,20 +15,6 @@
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
-
-#define BCM2708_PERI_BASE        0x20000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controler */
-
-// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) 
-// or SET_GPIO_ALT(x,y)
-#define INP_GPIO(addr,g) *((addr)+((g)/10)) &= ~(7<<(((g)%10)*3))
-#define OUT_GPIO(addr,g) *((addr)+((g)/10)) |=  (1<<(((g)%10)*3))
-
-#define GPIO_SET(gpio) *((gpio)+7)  // sets   bits which are 1 ignores bits which are 0
-#define GPIO_CLR(gpio) *((gpio)+10) // clears bits which are 1 ignores bits which are 0
-// For GPIO# >= 32 (RPi B+)
-#define GPIO_SET_EXT(gpio) *(gpio+8)  // sets   bits which are 1 ignores bits which are 0
-#define GPIO_CLR_EXT(gpio) *(gpio+11) // clears bits which are 1 ignores bits which are 0
 
 /*
  * Arguments
@@ -60,26 +47,21 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	if (cmd == RPI_GPIO_SET)
 	{
-		short gpio = (short) arg;
-		if (gpio >= 32)
-			GPIO_SET_EXT(my_virtaddr) = (1 << (gpio % 32));
-		else
-			GPIO_SET(my_virtaddr) = (1 << gpio);
+		short gpio = gpio_nr;
+		if (arg)
+			gpio = (short) arg;
+		gpio_set_value(gpio, 1);
 	}
 	else if (cmd == RPI_GPIO_CLEAR)
 	{
-		short gpio = (short) arg;
-		if (gpio >= 32)
-			GPIO_CLR_EXT(my_virtaddr) = (1 << (gpio % 32));
-		else
-			GPIO_CLR(my_virtaddr) = (1 << gpio);
+		short gpio = gpio_nr;
+		if (arg)
+			gpio = (short) arg;
+		gpio_set_value(gpio, 0);
 	}
 	else if (cmd == RPI_GPIO_GET)
 	{
-		if (gpio_nr >= 32)
-			*(uint32_t *)arg = GPIO_CLR_EXT(my_virtaddr);
-		else
-			*(uint32_t *)arg = GPIO_CLR(my_virtaddr);
+		*(uint32_t *)arg = gpio_get_value(gpio_nr);
 	}
 	return 0;
 }
@@ -88,7 +70,6 @@ static int my_open(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: open()\n");
 
-	OUT_GPIO(my_virtaddr, gpio_nr);
 	return 0;
 }
 
@@ -111,17 +92,15 @@ static struct file_operations my_fops = {
 static int __init my_init(void)
 {
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
-	if ((my_virtaddr = ioremap (GPIO_BASE, PAGE_SIZE)) == NULL) {
-		printk(KERN_ERR "Can't map GPIO addr !\n");
-		return -1;
-	}
+	gpio_request(gpio_nr, THIS_MODULE->name);
+	gpio_direction_output(gpio_nr,1);
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
 	myclass_unregister(my_minor);
-	iounmap (my_virtaddr);
+	gpio_free(gpio_nr);
 }
 
 /*

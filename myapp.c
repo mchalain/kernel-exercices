@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+#include <stdint.h>
 
 #include "mydriver1.h"
 
@@ -16,7 +19,7 @@ int main(int argc, char **argv)
 	int opt;
 	do
 	{
-		opt = getopt(argc, argv, "hd:");
+		opt = getopt(argc, argv, "hd:n:");
 		switch (opt)
 		{
 			case 'h':
@@ -53,9 +56,20 @@ int main(int argc, char **argv)
 				case '0':
 					ret = ioctl(fd, RPI_GPIO_CLEAR, (void *)gpio_nr);
 				break;
+				case 'r':
+				{
+					uint32_t value;
+					ret = ioctl(fd, RPI_GPIO_GET, &value);
+					printf("gpio %d value %ld\n", gpio_nr, value);
+				}
+				break;
 			}
 		}
 		close(fd);
+	}
+	else
+	{
+		fprintf(stderr, "open error : %s\n", strerror(errno));
 	}
 	return 0;
 }
