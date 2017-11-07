@@ -22,7 +22,7 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
-static int gpio_nr = 16;
+static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
 
 static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
@@ -32,7 +32,6 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
 {
 	/* Schedule the tasklet */
 	clic ++;
-	wake_up_interruptible (&irq_wait_queue);
 	return IRQ_HANDLED;
 }
 
@@ -42,11 +41,7 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	int value;
-	while (clic == 0)
-		wait_event_interruptible(irq_wait_queue, clic);
-	clic= 0;
-	value = gpio_get_value(gpio_nr);
-	count = sprintf(buf, "%d\n", value);
+	count = sprintf(buf, "%d\n", clic);
 	*ppos += count;
 	return count;
 }
@@ -60,7 +55,7 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 static int my_open(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: open()\n");
-
+	clic = 0;
 	return 0;
 }
 
@@ -81,17 +76,21 @@ static struct file_operations my_fops = {
 
 static int __init my_init(void)
 {
+	int ret = 0;
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
-	gpio_request(gpio_nr, THIS_MODULE->name);
-	gpio_direction_input(gpio_nr);
-	request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
+	ret = gpio_request(gpio_nr, THIS_MODULE->name);
+	ret = gpio_direction_input(gpio_nr);
+	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
+	if (ret)
+		pr_info("error\n");
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-	myclass_unregister(my_minor);
+	free_irq(gpio_to_irq(gpio_nr), THIS_MODULE->name);
 	gpio_free(gpio_nr);
+	myclass_unregister(my_minor);
 }
 
 /*
