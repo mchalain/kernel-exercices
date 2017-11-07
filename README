@@ -10,7 +10,8 @@ Exercice 1:
  Faire toucher le fil et la rśesistance par intermitence. 
 
 Exercice 2:
- Utiliser les spinlock pour que la variable ne soit pas mis à jour pendant une lecture du fichier device.
+ Séparer le Bottom Half et le Top Half de la gestion d'IT.
+ Utiliser les fonctions de tasklet.
 
- trouver la solution avec git checkout irq.2
+ trouver la solution avec git checkout irq.4
 

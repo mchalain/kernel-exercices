@@ -9,6 +9,7 @@
 #include <linux/uaccess.h>
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
+#include <linux/spinlock.h>
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -22,13 +23,19 @@ static struct miscdevice mymisc;
 static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
 
+static raw_spinlock_t myspinlock;
 static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
 static int clic = 0;
 static irqreturn_t my_irq_handler(int irq, void * ident)
 {
-	/* Schedule the tasklet */
-	clic ++;
-	wake_up(&irq_wait_queue);
+	unsigned long dummyflags;
+	raw_spin_lock_irqsave(&myspinlock, dummyflags);
+	if (!clic)
+	{
+		clic ++;
+		wake_up(&irq_wait_queue);
+	}
+	raw_spin_unlock_irqrestore(&myspinlock, dummyflags);
 	return IRQ_HANDLED;
 }
 
@@ -37,10 +44,13 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
+	unsigned long dummyflags;
 	while (clic == 0)
 		wait_event_interruptible(irq_wait_queue, clic);
+	raw_spin_lock_irqsave(&myspinlock, dummyflags);
 	count = sprintf(buf, "%d\n", clic);
 	clic = 0;
+	raw_spin_unlock_irqrestore(&myspinlock, dummyflags);
 	*ppos += count;
 	return count;
 }
@@ -83,6 +93,8 @@ static int __init my_init(void)
 	mymisc.name = "mydriver";
 	mymisc.fops = &my_fops;
 	ret = misc_register(&mymisc);
+
+	raw_spin_lock_init(&myspinlock);
 
 	ret = gpio_request(gpio_nr, THIS_MODULE->name);
 	ret = gpio_direction_input(gpio_nr);
