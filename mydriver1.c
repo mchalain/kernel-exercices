@@ -23,7 +23,7 @@ static short int my_minor = 0;
 
 unsigned long *my_virtaddr;
 
-static int gpio_nr = 16;
+static int gpio_nr = 21;
 
 module_param(gpio_nr, int, 0644);
 
@@ -50,18 +50,22 @@ static long my_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		short gpio = gpio_nr;
 		if (arg)
 			gpio = (short) arg;
-		gpio_set_value(gpio, 1);
+		pr_info("set gpio %d\n", gpio);
+		if (gpio_set_value(gpio, 1) == 0)
+			gpio_nr = gpio;
 	}
 	else if (cmd == RPI_GPIO_CLEAR)
 	{
 		short gpio = gpio_nr;
 		if (arg)
 			gpio = (short) arg;
+		pr_info("clear gpio %d\n", gpio);
 		gpio_set_value(gpio, 0);
 	}
 	else if (cmd == RPI_GPIO_GET)
 	{
 		*(uint32_t *)arg = gpio_get_value(gpio_nr);
+		pr_info("get gpio %d => %ld\n", gpio_nr, *(uint32_t *)arg);
 	}
 	return 0;
 }
