@@ -21,7 +21,7 @@ MODULE_LICENSE("GPL");
  */
 static short int my_minor = 0;
 
-static int gpio_nr = 16;
+static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
 
 /*
