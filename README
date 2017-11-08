@@ -4,6 +4,7 @@ Exercice 1:
  Charger le module pour utiliser le GPIO 21 :
  > sudo insmod myclass.ko
  > sudo insmod mydriver1.ko gpio_nr=21
+ > sudo insmod mydevice1.ko
  Changer la direction du GPIO depuis sysfs
  > sudo bash
  # echo 1 > /sys/module/mydriver1/parameters/gpio_dir
@@ -13,15 +14,11 @@ Exercice 1:
  Utiliser une résistance entre GPIO 21 et le 3.3V pour changer l'état.
 
 Exercice 2:
- Modifier le code pour connaitre l'état du GPIO avec la fonction "read".
+ Ecrire mydevice2.ko pour le support de la Raspberry Pi 2 et 3.
+ La nouvelle adresse des périphérique est 0x3F000000.
 
 Exercice 3:
- Il existe une interface GPIO dans Linux utilisez là pour refaire le driver.
+ Modifier les drivers pour changer le numéro de GPIO depuis mydevice1
 
- Solution de l'exercice avec git checkout irq.3
+ Solution de l'exercice avec git checkout platform.rpi.2
 
-Exercice 4:
- Modifier le driver pour être compatible avec la Raspberry Pi3.
- Utiliser pour cela l'API platform de Linux.
-
- Solution de l'exercie avec git checkout platform.rpi.1

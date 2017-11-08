@@ -7,6 +7,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
+#include <linux/platform_device.h>
 #include <asm/io.h>
 
 #include "myclass.h"
@@ -16,8 +17,6 @@ MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
-#define BCM2708_PERI_BASE        0x20000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controler */
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) 
 // or SET_GPIO_ALT(x,y)
@@ -117,20 +116,42 @@ static struct file_operations my_fops = {
 	.unlocked_ioctl = my_ioctl,
 };
 
-static int __init my_init(void)
+static int my_probe(struct platform_device *dev)
 {
+	struct mydriver_data_t *data = (struct mydriver_data_t *)dev->dev.platform_data;
 	my_minor = myclass_register(&my_fops, "mydriver", NULL);
-	if ((my_virtaddr = ioremap (GPIO_BASE, PAGE_SIZE)) == NULL) {
+	if ((my_virtaddr = ioremap (data->base, PAGE_SIZE)) == NULL) {
 		printk(KERN_ERR "Can't map GPIO addr !\n");
 		return -1;
 	}
 	return 0;
 }
 
-static void __exit my_exit(void)
+static int my_remove(struct platform_device *dev)
 {
 	myclass_unregister(my_minor);
 	iounmap (my_virtaddr);
+	return 0;
+}
+
+static struct platform_driver my_driver =
+{
+	.driver = {
+		.name = "mydriver1",
+	},
+	.probe = my_probe,
+	.remove = my_remove,
+};
+
+static int __init my_init(void)
+{
+	platform_driver_register(&my_driver);
+	return 0;
+}
+
+static void __exit my_exit(void)
+{
+	platform_driver_unregister(&my_driver);
 }
 
 /*

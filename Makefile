@@ -6,6 +6,7 @@ KDIR= /lib/modules/$(shell uname -r)/build
 PWD= $(shell pwd)
 KBUILD_EXTRA_SYMBOLS=$(KDIR)/Module.symvers
 
+obj-m += mydevice1.o
 obj-m += mydriver1.o
 obj-m += myclass.o
 
