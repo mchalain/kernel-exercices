@@ -1,0 +1,18 @@
+Exercice 1:
+ Compiler le driver:
+ > make
+ Charger le driver :
+ > sudo insmod mydriver1.ko
+ Lire le fichier caratère créé par miscdevice:
+ > sudo cat /dev/mydriver
+ Visualiser l'architecture dans sysfs
+ > ls /sys/class/misc
+
+Exercice 2:
+ Créer une fonction modifiant la chaine de caractères de sortie.
+
+Exercice 3:
+ Utiliser l'API platform_device pour gérer la sortie du fichier device.
+ Créer un nouveau module mydevice1.ko qui initialise une chaine de caratères.
+
+ Trouver la solution avec git checkout platform.1
