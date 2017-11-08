@@ -8,10 +8,11 @@ Exercice 1:
  Ouvrir le fichier device:
  > sudo cat /dev/mydriver
  Faire toucher le fil et la rśesistance par intermitence. 
+ La sortie du cat ne nécessite plus un Ctrl+C et une IT.
 
 Exercice 2:
- Séparer le Bottom Half et le Top Half de la gestion d'IT.
- Utiliser les fonctions de tasklet.
+ Un type de traitement d'IT permet de créer un thread depuis le handler.
+ Utiliser la fonction request_threaded_irq puis le retour IRQ_WAKE_THREAD dans le handler.
 
- trouver la solution avec git checkout irq.4
+ trouver la solution avec git checkout irq.5
 
