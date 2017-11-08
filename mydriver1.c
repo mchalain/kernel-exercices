@@ -27,7 +27,7 @@ static raw_spinlock_t myspinlock;
 static DECLARE_WAIT_QUEUE_HEAD(irq_wait_queue);
 static int clic = 0;
 static int clicevent = 0;
-static void my_bottom_half(unsigned long dummy)
+static irqreturn_t my_bottom_half(int irq, void *dev_id)
 {
 	int value;
 	unsigned long dummyflags;
@@ -37,16 +37,13 @@ static void my_bottom_half(unsigned long dummy)
 		clic++;
 	clicevent = 1;
 	raw_spin_unlock_irqrestore(&myspinlock, dummyflags);
-
 	wake_up_interruptible (&irq_wait_queue);
+	return IRQ_HANDLED;
 }
-
-DECLARE_TASKLET(irq_bh_tasklet, my_bottom_half, 0);
 
 static irqreturn_t my_irq_handler(int irq, void * ident)
 {
-	tasklet_schedule(&irq_bh_tasklet);
-	return IRQ_HANDLED;
+	return IRQ_WAKE_THREAD;
 }
 
 /*
@@ -79,16 +76,18 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 static int my_open(struct inode *inode, struct file *file)
 {
 	int ret;
+	irq_handler_t handler = my_irq_handler;
 	printk(KERN_INFO "my char driver: open()\n");
 	clic = 0;
-	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
+	ret = request_threaded_irq(gpio_to_irq(gpio_nr), handler, my_bottom_half, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, &clic);
+	pr_info("open \n");
 	return ret;
 }
 
 static int my_release(struct inode *inode, struct file *file)
 {
 	printk(KERN_INFO "my char driver: release()\n");
-	free_irq(gpio_to_irq(gpio_nr), THIS_MODULE->name);
+	free_irq(gpio_to_irq(gpio_nr), &clic);
 
 	return 0;
 }

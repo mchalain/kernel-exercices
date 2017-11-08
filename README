@@ -11,8 +11,6 @@ Exercice 1:
  La sortie du cat ne nécessite plus un Ctrl+C et une IT.
 
 Exercice 2:
- Un type de traitement d'IT permet de créer un thread depuis le handler.
- Utiliser la fonction request_threaded_irq puis le retour IRQ_WAKE_THREAD dans le handler.
+ Utiliser disable_irq_nosync et enable_sync pour permettre de lire une seule interruption à la fois.
 
- trouver la solution avec git checkout irq.5
 
