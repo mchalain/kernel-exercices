@@ -7,6 +7,7 @@ PWD= $(shell pwd)
 KBUILD_EXTRA_SYMBOLS=$(KDIR)/Module.symvers
 
 obj-m += mydriver1.o
+obj-m += mydevice1.o
 
 all:
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) modules
