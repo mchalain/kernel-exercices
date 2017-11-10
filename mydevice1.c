@@ -12,11 +12,16 @@ static struct mydriver1_data_t my_data =
 	.string = "Bonjour de device1\n",
 };
 
+static void my_release(struct device *dev)
+{
+}
+
 static struct platform_device my_device =
 {
 	.name = "mydriver1",
 	.dev = {
 		.platform_data = &my_data,
+		.release = my_release,
 	},
 };
 

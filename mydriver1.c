@@ -23,6 +23,7 @@ MODULE_LICENSE("GPL");
  */
 
 static LIST_HEAD(mydevice_list);
+static int mydevice_nb = 0;
 
 /*
  * File operations
@@ -31,13 +32,14 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
 	int length = strlen(data->string);
-	printk(KERN_INFO "my char driver: read()\n");
+	printk(KERN_INFO "my char driver: read(%d) => %s\n", length, data->string);
 
-	if (data->read == length)
+	if (data->read >= length)
 		return 0;
-	count = copy_to_user(buf, data->string, length);
+	copy_to_user(buf, data->string, length);
+	count = length;
 	*ppos += count;
-	data->read = count;
+	data->read += count;
 	return count;
 }
 
@@ -88,12 +90,14 @@ static struct file_operations my_fops = {
 static int my_probe(struct platform_device *dev)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
-	pr_info("ddata %p",ddata);
+	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
 	{
 		struct miscdevice *misc = vmalloc(sizeof(*misc));
-		misc->minor = MISC_DYNAMIC_MINOR;
-		misc->name = "mydriver";
+		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
+		mydevice_nb++;
+		misc->minor = 110 + mydevice_nb;
+		misc->name = ddata->name;
 		misc->fops = &my_fops;
 
 		misc_register(misc);
@@ -107,9 +111,12 @@ static int my_probe(struct platform_device *dev)
 static int my_remove(struct platform_device *dev)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev->dev.platform_data;
-	misc_deregister(ddata->misc);
-	vfree(ddata->misc);
-	ddata->misc = NULL;
+	if (ddata->misc)
+	{
+		misc_deregister(ddata->misc);
+		vfree(ddata->misc);
+		ddata->misc = NULL;
+	}
 	return 0;
 }
 
