@@ -3,16 +3,27 @@ Exercice 1:
  > make
  Charger le driver :
  > sudo insmod mydriver1.ko
+ > sudo insmod mydevice1.ko
  Lire le fichier caratère créé par miscdevice:
- > sudo cat /dev/mydriver
+ > sudo cat /dev/mydriver0
  Visualiser l'architecture dans sysfs
  > ls /sys/class/misc
 
 Exercice 2:
- Créer une fonction modifiant la chaine de caractères de sortie.
+ modifier la chaine de caratère dans mydevice1.
+ Décharger seulement mydevice1.
+ > sudo rmmod mydevice1
+ Charger le nouveau mydevice1
+ > sudo insmod mydevice1.ko
+ Visualiser la chaine de caractères
+ > sudo cat /dev/mydriver0
+ Le driver prend bien en compte la nouvelle configuration du device sans changer sont fonctionnement.
 
 Exercice 3:
- Utiliser l'API platform_device pour gérer la sortie du fichier device.
- Créer un nouveau module mydevice1.ko qui initialise une chaine de caratères.
+ Créer un deuxième module mydevice2.ko qui initialise une autre chaine de caratères.
+ Ne pas oublier d'initialiser l'id du device avec une valeur différente que celle de mydevice1.
 
- Trouver la solution avec git checkout platform.1
+Exercice 4:
+ Créer une ressource pour le device et obtener une adresse mémoire.
+
+ Trouver la solution avec git checkout platform.2
