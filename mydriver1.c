@@ -25,22 +25,50 @@ MODULE_LICENSE("GPL");
 static LIST_HEAD(mydevice_list);
 static int mydevice_nb = 0;
 
+static char *resourcename = "my_resource";
+module_param(resourcename, charp, S_IRUGO|S_IWUSR);
+static int resourcetype = IORESOURCE_IRQ;
+module_param(resourcetype, int, S_IRUGO|S_IWUSR);
+static char *resourceType = "IRQ";
+module_param(resourceType, charp, S_IRUGO|S_IWUSR);
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
-	int length = strlen(data->string);
-	printk(KERN_INFO "my char driver: read(%d) => %s\n", length, data->string);
+	struct resource *res = data->res;
+	void *address = (void *)res->start;
+	uint32_t size = resource_size(res);
+	ssize_t ret = 0;
+	printk(KERN_INFO "my char driver: read() => %p\n", address);
 
-	if (data->read >= length)
-		return 0;
-	copy_to_user(buf, data->string, length);
-	count = length;
-	*ppos += count;
-	data->read += count;
-	return count;
+	if (data->read > 0)
+		return ret;
+
+	ret += snprintf(buf, count, "res: %s\n", res->name);
+	switch (res->flags & IORESOURCE_TYPE_BITS)
+	{
+		case IORESOURCE_REG:
+		case IORESOURCE_MEM:
+			ret += snprintf(buf + ret, count - ret, "Mem 0x%p/%u\n", address, size);
+		break;
+		case IORESOURCE_IO:
+			ret += snprintf(buf + ret, count - ret, "IOP 0x%p/%u\n", address, size);
+		break;
+		case IORESOURCE_IRQ:
+			ret += snprintf(buf + ret, count - ret, "Irq %d\n", res->start);
+		break;
+		case IORESOURCE_DMA:
+			ret += snprintf(buf + ret, count - ret, "Dma %d\n", res->start);
+		break;
+		case IORESOURCE_BUS:
+			ret += snprintf(buf + ret, count - ret, "Bus %d\n", res->start);
+		break;
+	}
+	*ppos += ret;
+	data->read += ret;
+	return ret;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
@@ -56,7 +84,7 @@ static int my_open(struct inode *inode, struct file *file)
 	struct mydriver1_data_t *data = NULL, *pos;
 	list_for_each_entry(pos, &mydevice_list, list)
 	{
-		if (pos->misc->minor == iminor(inode))
+		if (pos->misc.minor == iminor(inode))
 		{
 			data = pos;
 			break;
@@ -87,36 +115,49 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
-static int my_probe(struct platform_device *dev)
+static int my_probe(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
-	pr_info("probe ddata %p\n",ddata);
-	if (ddata)
+	struct resource *res = NULL;
+	struct mydriver1_data_t *data = NULL;
+	pr_info("dev %s (%s)\n", pdev->name, pdev->resource[0].name);
+	res = platform_get_resource_byname(pdev, resourcetype, resourcename);
+
+	if (res)
 	{
-		struct miscdevice *misc = vmalloc(sizeof(*misc));
-		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
+		data = devm_kzalloc(&pdev->dev,sizeof(*data), GFP_KERNEL);
+		snprintf(data->name, sizeof(data->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
-		misc->minor = 110 + mydevice_nb;
-		misc->name = ddata->name;
-		misc->fops = &my_fops;
+		data->misc.minor = 110 + mydevice_nb;
+		data->misc.name = data->name;
+		data->misc.fops = &my_fops;
 
-		misc_register(misc);
+		misc_register(&data->misc);
 
-		ddata->misc = misc;
-		list_add(&ddata->list, &mydevice_list);
+		data->res = res;
+		list_add(&data->list, &mydevice_list);
 	}
+
+	platform_set_drvdata(pdev, data);
 	return 0;
 }
 
-static int my_remove(struct platform_device *dev)
+static int my_remove(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev->dev.platform_data;
-	if (ddata->misc)
+	struct mydriver1_data_t *data = platform_get_drvdata(pdev);
+
+	if (data)
 	{
-		misc_deregister(ddata->misc);
-		vfree(ddata->misc);
-		ddata->misc = NULL;
+		pr_info("remove drvdata %p\n",data);
+		if (data->misc.minor > 0)
+		{
+			misc_deregister(&data->misc);
+		}
+		/**
+		 * data is free with device structure
+		 */
+//		vfree(data);
 	}
+
 	return 0;
 }
 
@@ -132,7 +173,18 @@ static struct platform_driver my_driver =
 
 static int __init my_init(void)
 {
-
+	if (!strcmp(resourceType, "MEM"))
+		resourcetype = IORESOURCE_MEM;
+	else if (!strcmp(resourceType, "IO"))
+		resourcetype = IORESOURCE_IO;
+	else if (!strcmp(resourceType, "REG"))
+		resourcetype = IORESOURCE_REG;
+	else if (!strcmp(resourceType, "DMA"))
+		resourcetype = IORESOURCE_DMA;
+	else if (!strcmp(resourceType, "BUS"))
+		resourcetype = IORESOURCE_BUS;
+	else
+		resourcetype = IORESOURCE_IRQ;
 	platform_driver_register(&my_driver);
 	return 0;
 }

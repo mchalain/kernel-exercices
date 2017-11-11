@@ -1,15 +1,17 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
-#include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
-static struct mydriver1_data_t my_data =
-{
-	.string = "Bonjour de device1\n",
+static struct resource my_resource[] = {
+	[0] = {
+		.name = "my_resource",
+		.start = 7,
+		.flags = IORESOURCE_IRQ,
+	},
 };
 
 static void my_release(struct device *dev)
@@ -20,9 +22,10 @@ static struct platform_device my_device =
 {
 	.name = "mydriver1",
 	.dev = {
-		.platform_data = &my_data,
 		.release = my_release,
 	},
+	.resource = my_resource,
+	.num_resources = ARRAY_SIZE(my_resource),
 };
 
 static int __init my_init(void)
