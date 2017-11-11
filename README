@@ -6,24 +6,19 @@ Exercice 1:
  > sudo insmod mydevice1.ko
  Lire le fichier caratère créé par miscdevice:
  > sudo cat /dev/mydriver0
- Visualiser l'architecture dans sysfs
- > ls /sys/class/misc
 
-Exercice 2:
- modifier la chaine de caratère dans mydevice1.
- Décharger seulement mydevice1.
+ Décharger les modules mydevice1 et mydriver1
  > sudo rmmod mydevice1
- Charger le nouveau mydevice1
- > sudo insmod mydevice1.ko
+ > sudo rmmod mydriver1
+ Créer un nouveau module et sa resourcee dans mydevice2.
+ Charger le nouveau mydriver1 avec le bon type et le bon nom de resource
+ > sudo insmod mydrive1.ko resourcename=test resourceType=MEM
+ Charger le nouveau mydevice2
+ > sudo insmod mydevice2.ko
  Visualiser la chaine de caractères
  > sudo cat /dev/mydriver0
  Le driver prend bien en compte la nouvelle configuration du device sans changer sont fonctionnement.
 
 Exercice 3:
- Créer un deuxième module mydevice2.ko qui initialise une autre chaine de caratères.
- Ne pas oublier d'initialiser l'id du device avec une valeur différente que celle de mydevice1.
+ Ajouter une deuxième resource dans mydevice2 puis utiliser cette resource dans mydriver1.
 
-Exercice 4:
- Créer une ressource pour le device et obtener une adresse mémoire.
-
- Trouver la solution avec git checkout platform.2
