@@ -57,13 +57,13 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 			ret += snprintf(buf + ret, count - ret, "IOP 0x%p/%u\n", address, size);
 		break;
 		case IORESOURCE_IRQ:
-			ret += snprintf(buf + ret, count - ret, "Irq %d\n", res->start);
+			ret += snprintf(buf + ret, count - ret, "Irq %u\n", (unsigned int)res->start);
 		break;
 		case IORESOURCE_DMA:
-			ret += snprintf(buf + ret, count - ret, "Dma %d\n", res->start);
+			ret += snprintf(buf + ret, count - ret, "Dma %u\n", (unsigned int)res->start);
 		break;
 		case IORESOURCE_BUS:
-			ret += snprintf(buf + ret, count - ret, "Bus %d\n", res->start);
+			ret += snprintf(buf + ret, count - ret, "Bus %u\n", (unsigned int)res->start);
 		break;
 	}
 	*ppos += ret;
