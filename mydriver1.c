@@ -25,7 +25,6 @@ module_param(gpio_nr, int, 0644);
 static int clic = 0;
 static irqreturn_t my_irq_handler(int irq, void * ident)
 {
-	/* Schedule the tasklet */
 	clic ++;
 	return IRQ_HANDLED;
 }
