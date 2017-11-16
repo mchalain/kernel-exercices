@@ -11,6 +11,7 @@
 
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
+#include <linux/of.h>
 
 #include "mydriver1.h"
 
@@ -90,6 +91,16 @@ static struct file_operations my_fops = {
 static int my_probe(struct platform_device *dev)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
+	if (ddata == NULL)
+	{
+		struct device_node *node;
+		node = of_find_node_with_property(NULL, "string");
+		if (node)
+		{
+			ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
+			of_property_read_string(node, "string", &ddata->string);
+		}
+	}
 	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
 	{
@@ -111,7 +122,7 @@ static int my_probe(struct platform_device *dev)
 static int my_remove(struct platform_device *dev)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev->dev.platform_data;
-	if (ddata->misc)
+	if (ddata && ddata->misc)
 	{
 		misc_deregister(ddata->misc);
 		vfree(ddata->misc);

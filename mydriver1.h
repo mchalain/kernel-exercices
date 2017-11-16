@@ -5,7 +5,7 @@ struct mydriver1_data_t
 {
 	char name[11];
 	struct miscdevice *misc;
-	char *string;
+	const char *string;
 	int read;
 	struct list_head list;
 };

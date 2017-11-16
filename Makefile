@@ -9,7 +9,9 @@ KBUILD_EXTRA_SYMBOLS=$(KDIR)/Module.symvers
 obj-m += mydriver1.o
 obj-m += mydevice1.o
 
-all:
+dtbo-y += mydevice1.dtbo
+
+all: $(dtbo-y)
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS) modules
 
 install:
@@ -18,5 +20,8 @@ install:
 
 clean:
 	rm -f *~ Module.markers Modules.symvers
+	rm -f *.dtbo
 	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) clean
 
+%.dtbo: %.dts
+	dtc -O dtb -o $@ -@ $<
