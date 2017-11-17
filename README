@@ -3,27 +3,32 @@ Exercice 1:
  > make
  Charger le driver :
  > sudo insmod mydriver1.ko
- > sudo insmod mydevice1.ko
+ Vérifier que configfs en monté :
+ > mount | grep configfs
+ Créer le "overlay" dans configfs :
+ > sudo mkdir /sys/kernel/config/device-tree/overlays/mydevice1
+ Charger le "overlay" dans configfs :
+ > sudo tee /sys/kernel/config/device-tree/overlays/mydevice1/dtbo < mydevice1.dtbo
  Lire le fichier caratère créé par miscdevice:
  > sudo cat /dev/mydriver0
- Visualiser l'architecture dans sysfs
- > ls /sys/class/misc
 
 Exercice 2:
- modifier la chaine de caratère dans mydevice1.
- Décharger seulement mydevice1.
- > sudo rmmod mydevice1
- Charger le nouveau mydevice1
- > sudo insmod mydevice1.ko
- Visualiser la chaine de caractères
+ Décharger le driver:
+ > sudo rmmod mydriver1
+ Modifier mydevice1.dts et reconstruire le dtbo
+ > make mydevice1.dtbo
+ Charger le nouveau dtbo
+ > sudo tee /sys/kernel/config/device-tree/overlays/mydevice1/dtbo <
+ mydevice1.dtbo
+ Recharger le driver:
+ > sudo insmod mydrive1.ko
+ Lire le fichier caractère créé par miscdevice:
  > sudo cat /dev/mydriver0
- Le driver prend bien en compte la nouvelle configuration du device sans changer sont fonctionnement.
 
-Exercice 3:
- Créer un deuxième module mydevice2.ko qui initialise une autre chaine de caratères.
- Ne pas oublier d'initialiser l'id du device avec une valeur différente que celle de mydevice1.
+Exercice 2:
+ Ecrire une mydevice2.dts pour charger 2 devices utilisant le même driver.
+ Il est pour cela impossible de se baser sur le nom du driver, mais nécessite
+ d'utiliser une structure of_device_id.
 
-Exercice 4:
- Créer une ressource pour le device et obtener une adresse mémoire.
+ trouver la correction de l'exercice avec git checkout platform.4
 
- Trouver la solution avec git checkout platform.2
