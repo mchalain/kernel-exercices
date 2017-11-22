@@ -25,7 +25,7 @@ Exercice 2:
  Lire le fichier caractère créé par miscdevice:
  > sudo cat /dev/mydriver0
 
-Exercice 2:
+Exercice 3:
  Ecrire une mydevice2.dts pour charger 2 devices utilisant le même driver.
  Il est pour cela impossible de se baser sur le nom du driver, mais nécessite
  d'utiliser une structure of_device_id.

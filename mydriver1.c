@@ -6,7 +6,7 @@
 #include <linux/fs.h>           /* file_operations */
 #include <linux/cdev.h>
 #include <linux/device.h>
-#include <linux/vmalloc.h>
+#include <linux/slab.h>
 #include <linux/uaccess.h>
 
 #include <linux/miscdevice.h>
@@ -104,7 +104,7 @@ static int my_probe(struct platform_device *dev)
 	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
 	{
-		struct miscdevice *misc = vmalloc(sizeof(*misc));
+		struct miscdevice *misc = kmalloc(sizeof(*misc), GFP_KERNEL);
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
 		misc->minor = 110 + mydevice_nb;
