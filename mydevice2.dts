@@ -4,9 +4,9 @@
 	fragment {
 		target-path = "/";
 		__overlay__ {
-			mydevice1 {
+			mydevice2 {
 				compatible = "mydriver1";
-				string ="hello device 1";
+				string ="hello device 2";
 			};
 		};
 	};

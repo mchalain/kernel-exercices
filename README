@@ -3,32 +3,19 @@ Exercice 1:
  > make
  Charger le driver :
  > sudo insmod mydriver1.ko
- Vérifier que configfs en monté :
- > mount | grep configfs
- Créer le "overlay" dans configfs :
- > sudo mkdir /sys/kernel/config/device-tree/overlays/mydevice1
- Charger le "overlay" dans configfs :
- > sudo tee /sys/kernel/config/device-tree/overlays/mydevice1/dtbo < mydevice1.dtbo
- Lire le fichier caratère créé par miscdevice:
+ Charger les "overlays" dans configfs :
+ > sudo dtoverlay mydevice1.dtbo
+ > sudo dtoverlay mydevice2.dtbo
+ Lire les fichiers caratère créé par miscdevice:
  > sudo cat /dev/mydriver0
+ > sudo cat /dev/mydriver0
+ Visualiser le device tree:
+ > touch test
+ > sudo tee /dev/mydriver0 < test
+ > dmesg
 
 Exercice 2:
- Décharger le driver:
- > sudo rmmod mydriver1
- Modifier mydevice1.dts et reconstruire le dtbo
- > make mydevice1.dtbo
- Charger le nouveau dtbo
- > sudo tee /sys/kernel/config/device-tree/overlays/mydevice1/dtbo <
- mydevice1.dtbo
- Recharger le driver:
- > sudo insmod mydrive1.ko
- Lire le fichier caractère créé par miscdevice:
- > sudo cat /dev/mydriver0
+ Modifier le device tree pour mettre les informations "string" dans un autre node.
 
-Exercice 2:
- Ecrire une mydevice2.dts pour charger 2 devices utilisant le même driver.
- Il est pour cela impossible de se baser sur le nom du driver, mais nécessite
- d'utiliser une structure of_device_id.
-
- trouver la correction de l'exercice avec git checkout platform.4
+ trouver la correction de l'exercice avec git checkout platform.5
 
