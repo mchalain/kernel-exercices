@@ -1,13 +1,19 @@
 /dts-v1/;
 /plugin/;
 / {
-	fragment {
+	fragment@0 {
 		target-path = "/";
 		__overlay__ {
 			mydevice2 {
-				compatible = "mydriver1";
+				compatible = "test,mydriver1";
 				string ="hello device 2";
 			};
+		};
+	};
+	fragment@1 {
+		target-path = "/mydevice2";
+		__overlay__ {
+			string ="hello device 2";
 		};
 	};
 };

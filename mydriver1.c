@@ -169,6 +169,12 @@ struct of_device_id my_devices_table[] =
 	{
 		.compatible = "mydriver1",
 	},
+	{
+		.compatible = "example,mydriver1",
+	},
+	{
+		.compatible = "test,mydriver1",
+	},
 	{}
 };
 
