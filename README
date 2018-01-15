@@ -17,5 +17,5 @@ Exercice 1:
 Exercice 2:
  Modifier le device tree pour mettre les informations "string" dans un autre node.
 
- trouver la correction de l'exercice avec git checkout platform.5
+ trouver la correction de l'exercice avec git checkout devicetree.3
 
