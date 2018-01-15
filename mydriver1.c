@@ -32,12 +32,28 @@ static int mydevice_nb = 0;
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
-	int length = strlen(data->string);
-	printk(KERN_INFO "my char driver: read(%d) => %s\n", length, data->string);
+	int length = 0;
+	if (data->pdev)
+	{
+		struct device_node *node = data->pdev->dev.of_node;
+		const char *string = NULL;
+		of_property_read_string(node, "string", &string);
+		if (string)
+		{
+			length = strlen(string);
+			printk(KERN_INFO "my char driver: read(%d) => %s\n", length, string);
+		}
 
-	if (data->read >= length)
-		return 0;
-	copy_to_user(buf, data->string, length);
+		if (data->read >= length)
+			return 0;
+		if (length >= 0)
+		{
+			copy_to_user(buf, string, length);
+			buf[length] = '\n';
+			length++;
+			buf[length] = '\0';
+		}
+	}
 	count = length;
 	*ppos += count;
 	data->read += count;
@@ -57,7 +73,7 @@ static int my_open(struct inode *inode, struct file *file)
 	struct mydriver1_data_t *data = NULL, *pos;
 	list_for_each_entry(pos, &mydevice_list, list)
 	{
-		if (pos->misc->minor == iminor(inode))
+		if (pos->misc.minor == iminor(inode))
 		{
 			data = pos;
 			break;
@@ -93,18 +109,13 @@ static int my_probe(struct platform_device *dev)
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
 	if (ddata == NULL)
 	{
-		struct device_node *node;
-		node = of_find_node_with_property(NULL, "string");
-		if (node)
-		{
-			ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
-			of_property_read_string(node, "string", &ddata->string);
-		}
+		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
+		ddata->pdev = dev;
 	}
 	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
 	{
-		struct miscdevice *misc = kmalloc(sizeof(*misc), GFP_KERNEL);
+		struct miscdevice *misc = &ddata->misc;
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
 		misc->minor = 110 + mydevice_nb;
@@ -113,7 +124,6 @@ static int my_probe(struct platform_device *dev)
 
 		misc_register(misc);
 
-		ddata->misc = misc;
 		list_add(&ddata->list, &mydevice_list);
 	}
 	return 0;
@@ -122,11 +132,10 @@ static int my_probe(struct platform_device *dev)
 static int my_remove(struct platform_device *dev)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev->dev.platform_data;
-	if (ddata && ddata->misc)
+	if (ddata)
 	{
-		misc_deregister(ddata->misc);
-		vfree(ddata->misc);
-		ddata->misc = NULL;
+		pr_info("misc deregister\n");
+		misc_deregister(&ddata->misc);
 	}
 	return 0;
 }
