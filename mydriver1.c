@@ -35,11 +35,11 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
 	int length = 0;
-	if (data->node)
+	if (data->pdev)
 	{
 		const char *string = NULL;
-		struct device_node *node = data->node;
-		if (of_find_property(node, "string", NULL) == NULL)	
+		struct device_node *node = data->pdev->dev.of_node;
+		if (of_find_property(node, "string", NULL) == NULL)
 		{
 			node  = of_find_node_with_property(data->node, "string");
 		}
@@ -149,7 +149,7 @@ static int my_probe(struct platform_device *dev)
 	if (ddata == NULL)
 	{
 		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
-		ddata->node = dev->dev.of_node;
+		ddata->pdev = dev;
 	}
 	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
