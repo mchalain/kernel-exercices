@@ -5,17 +5,26 @@ Exercice 1:
  > sudo insmod mydriver1.ko
  Charger les "overlays" dans configfs :
  > sudo dtoverlay mydevice1.dtbo
- > sudo dtoverlay mydevice2.dtbo
  Lire les fichiers caratère créé par miscdevice:
  > sudo cat /dev/mydriver0
- > sudo cat /dev/mydriver0
- Visualiser le device tree:
- > touch test
- > sudo tee /dev/mydriver0 < test
- > dmesg
+ Ici le mydriver1 a été modifié pour chercher la propriété "string" dans un noeud enfant.
 
 Exercice 2:
- Modifier le device tree pour mettre les informations "string" dans un autre node.
+ Écrire le dts en sortant le noeud "data" du noeud "mydevice".
+ Ajouter une référence par label du nouveau noeud dans "mydevice".
+ > cat mydevice2.1.dts
 
- trouver la correction de l'exercice avec git checkout platform.5
+Exercice 3:
+ Faire la même chose mais en utilisant le chemin du noeud "data" comme référence dans le noeud "mydevice".
+ > cat mydevice2.2.dts
+
+Exercice 4:
+ Écrire un dts pour surcharger la valeur de "string" dans le noeud "data".
+ > cat mydevice3.dts
+
+Exercice 5:
+ Ajouter une resource dans le noeud "mydevice" du type reg.
+
+ trouver la correction de l'exercice avec git checkout devicetree.4
+
 
