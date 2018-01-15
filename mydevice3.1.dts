@@ -1,0 +1,15 @@
+/dts-v1/;
+/plugin/;
+/ {
+	fragment {
+		target-path = "/";
+		__overlay__{
+			mydevice@3 {
+				compatible = "test,mydriver1";
+				data {
+					string = "Hello device 3.1";
+				};
+			};
+		};
+	};
+};

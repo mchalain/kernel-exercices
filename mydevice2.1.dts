@@ -1,14 +1,15 @@
 /dts-v1/;
 /plugin/;
 / {
-	fragment {
+	fragment@0 {
 		target-path = "/";
 		__overlay__ {
-			mydevice@1 {
+			mydata:	data@2.1 {
+				string = "hello data 2.1";
+			};
+			mydevice@2.1 {
 				compatible = "example,mydriver1";
-				data {
-					string = "hello data 1";
-				};
+				data = <&mydata>;
 			};
 		};
 	};

@@ -1,0 +1,10 @@
+/dts-v1/;
+/plugin/;
+/ {
+	fragment {
+		target-path = "/mydevice@3/data";
+		__overlay__ {
+			string = "Hello device 3.2";
+		};
+	};
+};
