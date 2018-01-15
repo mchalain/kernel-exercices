@@ -15,6 +15,7 @@ Exercice 1:
 Exercice 2:
  Décharger le device:
  > sudo rmdir /sys/kernel/config/device-tree/overlays/0_mydevice1
+ !! attention le déchargement ne marche pas sur tous les kernel
  Modifier mydevice1.dts et reconstruire le dtbo
  > make mydevice1.dtbo
  Charger le nouveau dtbo
