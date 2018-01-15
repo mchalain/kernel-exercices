@@ -31,5 +31,5 @@ Exercice 3:
  Il est pour cela impossible de se baser sur le nom du driver, mais nécessite
  d'utiliser une structure of_device_id.
 
- trouver la correction de l'exercice avec git checkout platform.4
+ trouver la correction de l'exercice avec git checkout devicetree.2
 
