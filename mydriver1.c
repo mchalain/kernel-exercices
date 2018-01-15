@@ -35,17 +35,26 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
 	int length = 0;
-	if (data->string)
+	if (data->pdev)
 	{
-		length = strlen(data->string);
-		printk(KERN_INFO "my char driver: read(%d) => %s\n", length, data->string);
+		struct device_node *node = data->pdev->dev.of_node;
+		const char *string = NULL;
+		of_property_read_string(node, "string", &string);
+		if (string)
+		{
+			length = strlen(string);
+			printk(KERN_INFO "my char driver: read(%d) => %s\n", length, string);
+		}
 
 		if (data->read >= length)
 			return 0;
-		copy_to_user(buf, data->string, length);
-		buf[length] = '\n';
-		length++;
-		buf[length] = '\0';
+		if (length >=0 )
+		{
+			copy_to_user(buf, string, length);
+			buf[length] = '\n';
+			length++;
+			buf[length] = '\0';
+		}
 	}
 	count = length;
 	*ppos += count;
@@ -129,13 +138,8 @@ static int my_probe(struct platform_device *dev)
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
 	if (ddata == NULL)
 	{
-		struct device_node *node;
-		node = of_find_node_with_property(NULL, "string");
-		if (node)
-		{
-			ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
-			of_property_read_string(node, "string", &ddata->string);
-		}
+		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
+		ddata->pdev = dev;
 	}
 	pr_info("probe ddata %p\n",ddata);
 	if (ddata)
