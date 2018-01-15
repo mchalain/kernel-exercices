@@ -37,8 +37,8 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	int length = 0;
 	if (data->pdev)
 	{
-		struct device_node *node = data->pdev->dev.of_node;
 		const char *string = NULL;
+		struct device_node *node = data->pdev->dev.of_node;
 		of_property_read_string(node, "string", &string);
 		if (string)
 		{
