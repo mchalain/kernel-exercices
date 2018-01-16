@@ -6,9 +6,9 @@ Exercice 1:
  Charger les "overlays" dans configfs :
  > sudo dtoverlay mydevice1.dtbo
  > sudo dtoverlay mydevice2.dtbo
- Lire les fichiers caratère créé par miscdevice:
+ Lire les fichiers caractère créés par miscdevice:
  > sudo cat /dev/mydriver0
- > sudo cat /dev/mydriver0
+ > sudo cat /dev/mydriver1
  Visualiser le device tree:
  > touch test
  > sudo tee /dev/mydriver0 < test
