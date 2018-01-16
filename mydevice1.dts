@@ -4,8 +4,8 @@
 	fragment {
 		target-path = "/";
 		__overlay__ {
+			/* mydriver1 est le nom du driver utilisant ce noeud */
 			mydriver1 {
-				compatible = "mydriver1";
 				string ="hello dtbo";
 			};
 		};
