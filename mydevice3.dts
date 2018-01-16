@@ -2,9 +2,13 @@
 /plugin/;
 / {
 	fragment {
-		target-path = "/mydevice@1/data";
+		target-path = "/";
 		__overlay__ {
-			string = "Hello device 3";
+			#address-cells = <1>;
+			mydevice@3 {
+				compatible = "test,mydriver1";
+				reg = <0x2000 0x0100>,<0x4000 0x0200>;
+			};
 		};
 	};
 };

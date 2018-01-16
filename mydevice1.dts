@@ -6,9 +6,7 @@
 		__overlay__ {
 			mydevice@1 {
 				compatible = "example,mydriver1";
-				data {
-					string = "hello data 1";
-				};
+				reg = <0x1000 0x10>;
 			};
 		};
 	};

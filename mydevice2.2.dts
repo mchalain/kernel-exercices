@@ -4,12 +4,11 @@
 	fragment@0 {
 		target-path = "/";
 		__overlay__ {
-			data@2.2 {
-				string = "hello data 2.2";
-			};
+			#address-cells = <2>;
+			#size-cells = <1>;
 			mydevice@2.2 {
 				compatible = "example,mydriver1";
-				data = "/data@2.2";
+				reg = <0x0001 0x70000000 0x10000000>;
 			};
 		};
 	};

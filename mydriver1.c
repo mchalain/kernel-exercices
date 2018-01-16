@@ -37,31 +37,37 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	int length = 0;
 	if (data->pdev)
 	{
-		const char *string = NULL;
-		struct device_node *node = data->pdev->dev.of_node;
-		if (of_find_property(node, "string", NULL) == NULL)
+		unsigned long int start = 0, end = 0;
+		int i;
+		struct resource * res;
+		pr_info("nb resources %d\n", data->pdev->num_resources);
+
+		for (i = 0; i < data->pdev->num_resources; i++)
 		{
-			node  = of_find_node_with_property(node, "string");
+			res = platform_get_resource(data->pdev, IORESOURCE_MEM, i);
+			if (res)
+			{
+				start = res->start;
+				end = res->end;
+				pr_info("reg %d : 0x%lX 0x%lX\n", i, start, end);
+				//void *mem = devm_ioremap_resource(&data->pdev->dev, res);
+			}
 		}
-		string = NULL;
-		of_property_read_string(node, "string", &string);
-		if (string)
+		if (i == 0)
 		{
-			length = strlen(string);
-			printk(KERN_INFO "my char driver: read(%d) => %s\n", length, string);
+			int len;
+			const __be32 *addr_be;
+			struct device_node *node = data->pdev->dev.of_node;
+			addr_be = of_get_property(node, "reg", &len);
+			if (addr_be)
+				start = be32_to_cpup(addr_be);
 		}
 
+		length = sprintf(buf, "reg 0x%lX 0x%lX\n", start, end);
 		if (data->read >= length)
 			return 0;
-		if (length > 0)
-		{
-			copy_to_user(buf, string, length);
-			buf[length] = '\n';
-			length++;
-			buf[length] = '\0';
-		}
+		printk(KERN_INFO "my char driver: read(%d)\n", length);
 	}
-	pr_info("end read");
 	count = length;
 	*ppos += count;
 	data->read += count;
