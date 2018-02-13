@@ -4,13 +4,16 @@ Exercice 1:
  Charger le module pour utiliser le GPIO 21 :
  > sudo insmod myclass.ko
  > sudo insmod mydriver1.ko gpio_nr=21
+
+ Charger le module device de la Raspberry Pi B
  > sudo insmod mydevice1.ko
+
  Changer la direction du GPIO depuis sysfs
  > sudo bash
  # echo 1 > /sys/module/mydriver1/parameters/gpio_dir
  Lire l'état du GPIO
  > sudo ./myapp -d /dev/mydriver0
- r
+
  Utiliser une résistance entre GPIO 21 et le 3.3V pour changer l'état.
 
 Exercice 2:
@@ -21,4 +24,22 @@ Exercice 3:
  Modifier les drivers pour changer le numéro de GPIO depuis mydevice1
 
  Solution de l'exercice avec git checkout platform.rpi.2
+
+
+
+
+
+
+
+
+--- mydevice1.c
++++ mydevice2.c
+@@ -8,8 +8,8 @@
+ MODULE_AUTHOR("Marc Chalain, Smile ECS");
+ MODULE_LICENSE("GPL");
+ 
+-#define BCM2708_PERI_BASE        0x20000000
+-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000)
++#define BCM2709_PERI_BASE        0x3F000000
++#define GPIO_BASE                (BCM2709_PERI_BASE + 0x200000)
 
