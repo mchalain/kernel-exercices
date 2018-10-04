@@ -5,7 +5,8 @@ Charger le premier module :
  > sudo insmod mydriver1.ko
 Charger le deuxième module :
  > sudo insmod mydriver2.ko
-Ajouter la ligne EXPORT_SYMBOL_GPL dans mydriver1.ko.
+
+Créer un paramètre de type entier et afficher son contenu.
 Recompiler les modules :
  > make
 Charger les deux modules dans l'ordre :
