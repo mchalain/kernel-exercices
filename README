@@ -14,6 +14,6 @@ Charger les deux modules dans l'ordre :
  > sudo insmod mydriver2.ko
 
 Exercice 2:
- Créer un module "myclass" avec les fonctions myclass_register et myclass_unregister.
+ Créer un module de type charactère.
 
- continuer avec git checkout poo.1
+ continuer avec git checkout chardriver.0
