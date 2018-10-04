@@ -12,6 +12,18 @@ static char my_str[256] = "Enter in a function of mydriver1";
 module_param_string(message, my_str, sizeof(my_str), 0644);
 MODULE_PARM_DESC(message,"Une chaîne de caractères");
 
+#ifndef MODULE
+static int __init message_setup(char *str)
+{
+	strncpy(my_str, str, sizeof(my_str));
+	my_str[sizeof(my_str) - 1] = '\0';
+	return 1;
+}
+
+__setup("message=", message_setup);
+#endif
+
+
 /*
  * Arguments
  */

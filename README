@@ -1,19 +1,8 @@
 Exercice 1 :
-Compiler les modules :
- > make
-Charger le premier module :
- > sudo insmod mydriver1.ko
-Charger le deuxième module :
- > sudo insmod mydriver2.ko
+Ajouter le support du paramètre lors du démarrage du noyeau
 
-Créer un paramètre de type entier et afficher son contenu.
 Recompiler les modules :
  > make
 Charger les deux modules dans l'ordre :
  > sudo insmod mydriver1.ko
  > sudo insmod mydriver2.ko
-
-Exercice 2:
- Créer un module "myclass" avec les fonctions myclass_register et myclass_unregister.
-
- continuer avec git checkout poo.1
