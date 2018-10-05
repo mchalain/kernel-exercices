@@ -1,0 +1,14 @@
+dts-v1/;
+/plugin/;
+/ {
+	fragment {
+		target-path = "/";
+		__overlay__ {
+			mydevice@1 {
+				compatible = "example,mydriver1";
+				devname = "mydevice1";
+				mydevice1-gpios  = <&gpio 26 0>;
+			};
+		};
+	};
+};
