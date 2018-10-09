@@ -68,19 +68,20 @@ static int __init my_init(void)
 	int ret;
 	struct device *device = NULL;
 
-	my_class = class_create(THIS_MODULE, "mydrivers");
+	// enregistrement d'un majeur et d'une région de mineur
+	ret = register_chrdev_region(MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR, "/dev/mydriver");
+	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
+	// association des opérations sur le majeur et mineur
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
-
 	ret = cdev_add(&my_cdev, MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR);
-	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
+	if (ret < 0) panic("Couldn't register /dev/mydriver driver\n");
 
-	ret = register_chrdev_region(MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR, "/dev/mydriver");
-	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
-
+	// création du fichier spécial dans /dev et dans /sys/class
+	my_class = class_create(THIS_MODULE, "mydrivers");
 	device = device_create(my_class, NULL, MKDEV(MY_MAJOR, MY_FIRSTMINOR), NULL, "mydriver");
-	
+
 	return 0;
 }
 
