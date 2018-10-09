@@ -12,6 +12,8 @@ MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
 #define MY_MAJOR 60
+#define MY_FIRSTMINOR 0
+#define MY_MAXMINOR 1
 /*
  * Arguments
  */
@@ -71,23 +73,23 @@ static int __init my_init(void)
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
 
-	ret = cdev_add(&my_cdev, MKDEV(MY_MAJOR, 0), 1);
+	ret = cdev_add(&my_cdev, MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR);
 	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
-	ret = register_chrdev_region(MKDEV(MY_MAJOR, 0), 1, "/dev/mydriver");
+	ret = register_chrdev_region(MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR, "/dev/mydriver");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
 
-	device = device_create(my_class, NULL, MKDEV(MY_MAJOR, 0), NULL, "mydriver");
+	device = device_create(my_class, NULL, MKDEV(MY_MAJOR, MY_FIRSTMINOR), NULL, "mydriver");
 	
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-	device_destroy(my_class, MKDEV(MY_MAJOR, 0));
+	device_destroy(my_class, MKDEV(MY_MAJOR, MY_FIRSTMINOR));
 	cdev_del(&my_cdev);
 	class_destroy(my_class);
-	unregister_chrdev_region(MKDEV(MY_MAJOR, 0), 1);
+	unregister_chrdev_region(MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR);
 }
 
 /*
