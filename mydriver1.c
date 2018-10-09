@@ -61,7 +61,7 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
-static struct cdev my_cdev[10];
+static struct cdev my_cdev;
 static struct class *my_class = NULL;
 
 static int __init my_init(void)
@@ -75,19 +75,19 @@ static int __init my_init(void)
 	my_class = class_create(THIS_MODULE, "mydrivers");
 
 	ret = alloc_chrdev_region(&dev, 0, my_minor_range, "mydrivers");
-	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 
+	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
 	my_major = MAJOR(dev);
+
+	cdev_init(&my_cdev, &my_fops);
+	my_cdev.owner = THIS_MODULE;
+
+	ret = cdev_add(&my_cdev, dev, 1);
+	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
 	for (i = 0; i < my_minor_range; i++)
 	{
 		dev_t devno = MKDEV(my_major, i);
-		cdev_init(&my_cdev[i], &my_fops);
-		my_cdev[i].owner = THIS_MODULE;
-
-		ret = cdev_add(&my_cdev[i], devno, 1);
-		if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
-
 		device = device_create(my_class, NULL, devno, NULL, "mydriver%d", i);
 	}
 	
@@ -102,9 +102,9 @@ static void __exit my_exit(void)
 		dev_t devno = MKDEV(my_major, i);
 
 		device_destroy(my_class, devno);
-		cdev_del(&my_cdev[i]);
 	}
-  class_destroy(my_class);
+	cdev_del(&my_cdev);
+	class_destroy(my_class);
 	unregister_chrdev_region(MKDEV(my_major, 0), my_minor_range);
 }
 
