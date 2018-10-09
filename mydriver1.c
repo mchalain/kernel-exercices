@@ -71,7 +71,6 @@ static int __init my_init(void)
 	dev_t dev = 0;
 	int i;
 
-	my_minor_range = (my_minor_range > 10)?10:my_minor_range;
 	my_class = class_create(THIS_MODULE, "mydrivers");
 
 	ret = alloc_chrdev_region(&dev, 0, my_minor_range, "mydrivers");
@@ -81,7 +80,6 @@ static int __init my_init(void)
 
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
-
 	ret = cdev_add(&my_cdev, dev, 1);
 	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
 
