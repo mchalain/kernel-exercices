@@ -1,0 +1,6 @@
+Exercice 1:
+ Utiliser la fonction alloc_chrdev_region au lieu de register_chrdev_region.
+ Chercher le numéro de MAJOR du device créer.
+
+Exercice 2:
+ Créer une plage de minor et autant de fichiers device.

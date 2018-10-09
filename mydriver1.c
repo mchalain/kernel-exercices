@@ -88,9 +88,9 @@ static int __init my_init(void)
 
 static void __exit my_exit(void)
 {
-  device_destroy(my_class, MKDEV(my_major, 0));
-  cdev_del(&my_cdev);
-  class_destroy(my_class);
+	device_destroy(my_class, MKDEV(my_major, 0));
+	cdev_del(&my_cdev);
+	class_destroy(my_class);
 	unregister_chrdev_region(MKDEV(my_major, 0), 1);
 }
 
