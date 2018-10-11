@@ -11,12 +11,12 @@ MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
-#define MY_MAJOR 60
-#define MY_FIRSTMINOR 0
-#define MY_MAXMINOR 1
 /*
  * Arguments
  */
+#define MY_FIRSTMINOR 0
+#define MY_MAJOR 60
+#define MY_MAXMINOR 1
 
 /*
  * File operations
@@ -68,18 +68,19 @@ static int __init my_init(void)
 	int ret;
 	struct device *device = NULL;
 
-	// enregistrement d'un majeur et d'une région de mineur
+	// request a fixed MAJOR number and a range of MINOR
 	ret = register_chrdev_region(MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR, "/dev/mydriver");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
-	// association des opérations sur le majeur et mineur
+	// create link between MAJOR/MINOR and file operations
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
 	ret = cdev_add(&my_cdev, MKDEV(MY_MAJOR, MY_FIRSTMINOR), MY_MAXMINOR);
 	if (ret < 0) panic("Couldn't register /dev/mydriver driver\n");
 
-	// création du fichier spécial dans /dev et dans /sys/class
+	// create entry "mydrivers/" into /sys/class/
 	my_class = class_create(THIS_MODULE, "mydrivers");
+	// create entries "mydriver/" and "mydriver/dev" into /sys/class/mydrivers/
 	device = device_create(my_class, NULL, MKDEV(MY_MAJOR, MY_FIRSTMINOR), NULL, "mydriver");
 
 	return 0;
