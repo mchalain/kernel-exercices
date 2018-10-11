@@ -71,20 +71,18 @@ static int __init my_init(void)
 	struct device *device = NULL;
 	dev_t dev = 0;
 	int i;
-	int minor;
 
 	// generate dynamic MAJOR MINOR
 	ret = alloc_chrdev_region(&dev, MY_FIRSTMINOR, my_minor_range, "mydrivers");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
 	my_major = MAJOR(dev);
-	pr_info("first minor %d\n", minor);
 
 	// create link between MAJOR/MINOR and file operations
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
 	ret = cdev_add(&my_cdev, dev, my_minor_range);
-	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
+	if (ret < 0) panic("Couldn't register /dev/mydriver driver\n");
 
 	// create entry "mydrivers/" into /sys/class/
 	my_class = class_create(THIS_MODULE, "mydrivers");
@@ -94,7 +92,7 @@ static int __init my_init(void)
 		// create entries "mydriver[i]/" and "mydriver[i]/dev" into /sys/class/mydrivers/
 		device = device_create(my_class, NULL, devno, NULL, "mydriver%d", i);
 	}
-	
+
 	return 0;
 }
 
