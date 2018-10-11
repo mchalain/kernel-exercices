@@ -14,7 +14,9 @@ MODULE_LICENSE("GPL");
 /*
  * Arguments
  */
+#define MY_FIRSTMINOR 0
 static short int my_major = 0;
+#define MY_MAXMINOR 1
 
 /*
  * File operations
@@ -67,31 +69,32 @@ static int __init my_init(void)
 	struct device *device = NULL;
 	dev_t dev = 0;
 
-	my_class = class_create(THIS_MODULE, "mydrivers");
-
-	ret = alloc_chrdev_region(&dev, 0, 1, "mydriver");
+	// generate dynamic MAJOR MINOR
+	ret = alloc_chrdev_region(&dev, MY_FIRSTMINOR, MY_MAXMINOR, "mydriver");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
 	my_major = MAJOR(dev);
 
+	// create link between MAJOR/MINOR and file operations
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
+	ret = cdev_add(&my_cdev, MKDEV(my_major, MY_FIRSTMINOR), MY_MAXMINOR);
+	if (ret < 0) panic("Couldn't register /dev/mydriver driver\n");
 
-	ret = cdev_add(&my_cdev, MKDEV(my_major, 0), 1);
-	if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
+	// create entry "mydrivers/" into /sys/class/
+	my_class = class_create(THIS_MODULE, "mydrivers");
+	// create entries "mydriver[i]/" and "mydriver[i]/dev" into /sys/class/mydrivers/
+	device = device_create(my_class, NULL, MKDEV(my_major, MY_FIRSTMINOR), NULL, "mydriver");
 
-
-	device = device_create(my_class, NULL, MKDEV(my_major, 0), NULL, "mydriver");
-	
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
-	device_destroy(my_class, MKDEV(my_major, 0));
+	device_destroy(my_class, MKDEV(my_major, MY_FIRSTMINOR));
 	cdev_del(&my_cdev);
 	class_destroy(my_class);
-	unregister_chrdev_region(MKDEV(my_major, 0), 1);
+	unregister_chrdev_region(MKDEV(my_major, MY_FIRSTMINOR), MY_MAXMINOR);
 }
 
 /*
