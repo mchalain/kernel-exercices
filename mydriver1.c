@@ -20,17 +20,19 @@ static short int my_minor_range = 3;
 module_param(my_minor_range, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(my_minor_range, "The range of minor device number");
 
-static char *my_data = "my char driver\n";
+static char *my_data = "my char driver %d\n";
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
+	int minor = (int)file->private_data;
+
 	// ppos may contain the position inside the driver's buffer.
-	if (count > 16)
-		strncpy(buf, my_data + *ppos, 16 - *ppos);
+	if (count > 18)
+		sprintf(buf, my_data, minor);
 	// the returned count has to be the number of bytes copied inside the user buffer.
-	count = 16 - *ppos;
+	count = 18 - *ppos;
 	*ppos += count;
 	// while count is up to 0 the user application may continue to read.
 	// a normal application should close the file on a 0 returned.
@@ -48,6 +50,12 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 
 static int my_open(struct inode *inode, struct file *file)
 {
+	// inode contains informations shared between all opened instances
+	int minor = iminor(inode);
+
+	// file contains informations on this opened file
+	file->private_data = minor;
+
 	printk(KERN_INFO "my char driver: open()\n");
 
 	return 0;
