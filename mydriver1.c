@@ -83,7 +83,7 @@ static int __init my_init(void)
 
 	// create entry "mydrivers/" into /sys/class/
 	my_class = class_create(THIS_MODULE, "mydrivers");
-	// create entries "mydriver[i]/" and "mydriver[i]/dev" into /sys/class/mydrivers/
+	// create entries "mydriver/" and "mydriver/dev" into /sys/class/mydrivers/
 	device = device_create(my_class, NULL, MKDEV(my_major, MY_FIRSTMINOR), NULL, "mydriver");
 
 	return 0;
