@@ -20,15 +20,21 @@ static short int my_minor_range = 3;
 module_param(my_minor_range, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(my_minor_range, "The range of minor device number");
 
+static char *my_data = "my char driver\n";
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: read()\n");
-
-	count = 0;
+	// ppos may contain the position inside the driver's buffer.
+	if (count > 16)
+		strncpy(buf, my_data + *ppos, 16 - *ppos);
+	// the returned count has to be the number of bytes copied inside the user buffer.
+	count = 16 - *ppos;
 	*ppos += count;
+	// while count is up to 0 the user application may continue to read.
+	// a normal application should close the file on a 0 returned.
+	printk(KERN_INFO "my char driver: read() returns %lu\n", count);
 	return count;
 }
 
