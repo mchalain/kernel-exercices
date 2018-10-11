@@ -6,7 +6,8 @@
 #include <linux/fs.h>           /* file_operations */
 #include <linux/cdev.h>
 #include <linux/device.h>
-#include <linux/slab.h>
+#include <linux/slab.h> /* kmalloc */
+#include <linux/vmalloc.h> /* vmalloc */
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
@@ -15,49 +16,65 @@ MODULE_LICENSE("GPL");
 /*
  * Arguments
  */
+#define MY_FIRSTMINOR 0
 static short int my_major = 0;
+static short int my_minor_range = 3;
+module_param(my_minor_range, short, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(my_minor_range, "The range of minor device number");
 
 struct mydriver_data_s
 {
-	int minor;
+       int minor;
+       char *data;
 };
-
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
-	printk(KERN_INFO "my char driver: read(%d)\n", data->minor);
+	int length = strlen(data->data);
 
-	count = 0;
+	// ppos may contain the position inside the driver's buffer.
+	if (count > length)
+		strncpy(buf, data->data + *ppos, length - *ppos);
+	// the returned count has to be the number of bytes copied inside the user buffer.
+	count = length - *ppos;
 	*ppos += count;
+	// while count is up to 0 the user application may continue to read.
+	// a normal application should close the file on a 0 returned.
+	printk(KERN_INFO "my char driver(%d): read() returns %lu\n", data->minor, count);
 	return count;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
-	printk(KERN_INFO "my char driver: write(%d)\n", data->minor);
 
 	*ppos += count;
+	printk(KERN_INFO "my char driver(%d): write()\n", data->minor);
 	return count;
 }
 
 static int my_open(struct inode *inode, struct file *file)
 {
 	int minor = iminor(inode);
-	printk(KERN_INFO "my char driver: open(%d)\n",minor);
-	struct mydriver_data_s *data = kmalloc(sizeof(*data), GFP_KERNEL);
+	struct mydriver_data_s *data = vmalloc(sizeof(*data));
+
 	data->minor = minor;
+	data->data = vmalloc(17);
+	sprintf(data->data, "my char driver %d\n", minor);
 	file->private_data = data;
+
+	printk(KERN_INFO "my char driver: open()\n");
 	return 0;
 }
 
 static int my_release(struct inode *inode, struct file *file)
 {
 	struct mydriver_data_s *data = (struct mydriver_data_s *)file->private_data;
-	kfree(data);
+	vfree(data->data);
+	vfree(data);
 	printk(KERN_INFO "my char driver: release()\n");
 
 	return 0;
@@ -79,38 +96,44 @@ static int __init my_init(void)
 	int ret;
 	struct device *device = NULL;
 	dev_t dev = 0;
+	int i;
 
-	my_class = class_create(THIS_MODULE, "mydrivers");
-
-	ret = alloc_chrdev_region(&dev, 0, 10, "mydriver");
+	// generate dynamic MAJOR MINOR
+	ret = alloc_chrdev_region(&dev, MY_FIRSTMINOR, my_minor_range, "mydrivers");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n");
 
 	my_major = MAJOR(dev);
 
+	// create link between MAJOR/MINOR and file operations
 	cdev_init(&my_cdev, &my_fops);
 	my_cdev.owner = THIS_MODULE;
+	ret = cdev_add(&my_cdev, dev, my_minor_range);
+	if (ret < 0) panic("Couldn't register /dev/mydriver driver\n");
 
-	int i;
-	for (i = 0; i < 10; i++)
+	// create entry "mydrivers/" into /sys/class/
+	my_class = class_create(THIS_MODULE, "mydrivers");
+	for (i = 0; i < my_minor_range; i++)
 	{
-		ret = cdev_add(&my_cdev, MKDEV(my_major, i), 1);
-		if (ret) panic("Couldn't register /dev/mydriver driver\n"); 
-
-		device = device_create(my_class, NULL, MKDEV(my_major, i), NULL, "mydriver%d", i);
+		dev_t devno = MKDEV(my_major, MY_FIRSTMINOR + i);
+		// create entries "mydriver[i]/" and "mydriver[i]/dev" into /sys/class/mydrivers/
+		device = device_create(my_class, NULL, devno, NULL, "mydriver%d", i);
 	}
+
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
 	int i;
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < my_minor_range; i++)
 	{
-		device_destroy(my_class, MKDEV(my_major, i));
-		unregister_chrdev_region(MKDEV(my_major, i), 1);
+		dev_t devno = MKDEV(my_major, MY_FIRSTMINOR + i);
+
+		device_destroy(my_class, devno);
 	}
 	cdev_del(&my_cdev);
 	class_destroy(my_class);
+	unregister_chrdev_region(MKDEV(my_major, MY_FIRSTMINOR), my_minor_range);
 }
 
 /*
