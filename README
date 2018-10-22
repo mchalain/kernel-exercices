@@ -1,18 +1,23 @@
 Exercice 1:
- Compiler le driver:
+ build the driver:
  > make
- Charger le driver :
+ Load the driver :
  > sudo insmod mydriver1.ko
- Lire le fichier caratère créé par miscdevice:
- > sudo cat /dev/mydriver
- Visualiser l'architecture dans sysfs
- > ls /sys/class/misc
 
 Exercice 2:
- Créer une fonction modifiant la chaine de caractères de sortie.
+ Modify the driver to read data from the device. Use the function :
+
+``` C
+	int i2c_master_send(struct i2c_client *client, unsigned char *buffer, int bufferlen);
+	int i2c_master_recv(struct i2c_client *client, unsigned char *buffer, int bufferlen);
+```
+
+ The protocol to read data:
+	send(memory_address);
+	recv(one_byte);
 
 Exercice 3:
- Utiliser l'API platform_device pour gérer la sortie du fichier device.
- Créer un nouveau module mydevice1.ko qui initialise une chaine de caratères.
-
- Trouver la solution avec git checkout platform.1
+ The device may respond to any command from the master, at least with an error.
+ Then it is possible to detect a device.
+ It is possible to dispatch the detection and the probing when the address is unknown.
+ Remove "i2c_new_device" and use the "detect" method of the driver in the same place of the probe method.
