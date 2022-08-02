@@ -1,3 +1,10 @@
+Note:
+ The vanilla kernel doesn't support the DTB overlay from the userspace.
+ This is a special feature from the Raspberry Linux tree.
+ To emulate this feature, an external module can be use:
+  [dtbocfg](https://github.com/ikwzm/dtbocfg)
+ carefully.
+
 Exercice 1:
  Compiler le driver:
  > make
