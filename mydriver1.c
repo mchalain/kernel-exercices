@@ -139,7 +139,7 @@ static void print_device_tree_node(struct device_node *node, int depth)
 	for_each_child_of_node(node, child)
 	{
 		printk(KERN_INFO "%s{ name = %s\n", indent, child->name);
-		printk(KERN_INFO "%s  type = %s\n", indent, child->type);
+		printk(KERN_INFO "%s  full name = %s\n", indent, child->full_name);
 		for (properties = child->properties; properties != NULL; properties = properties->next)
 		{
 			printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
