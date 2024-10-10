@@ -28,7 +28,7 @@ int debounce = 20;
 module_param(debounce, int, 0644);
 
 #define CHANGED 0x80
-struct my_data_t
+struct mydriver1_data_t
 {
 	char name[11];
 	struct miscdevice misc;
