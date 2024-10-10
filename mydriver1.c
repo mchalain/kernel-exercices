@@ -37,8 +37,8 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 
 	if (data->read >= length)
 		return 0;
-	copy_to_user(buf, data->string, length);
-	count = length;
+	if (copy_to_user(buf, data->string, length) == length)
+		count = length;
 	*ppos += count;
 	data->read += count;
 	return count;
@@ -125,7 +125,7 @@ static int my_remove(struct platform_device *dev)
 	if (ddata && ddata->misc)
 	{
 		misc_deregister(ddata->misc);
-		vfree(ddata->misc);
+		kvfree(ddata->misc);
 		ddata->misc = NULL;
 	}
 	return 0;
