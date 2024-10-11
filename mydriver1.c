@@ -55,10 +55,12 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 			return 0;
 		if (length > 0)
 		{
-			copy_to_user(buf, string, length);
-			buf[length] = '\n';
-			length++;
-			buf[length] = '\0';
+			if (copy_to_user(buf, string, length) == length)
+			{
+				buf[length] = '\n';
+				length++;
+				buf[length] = '\0';
+			}
 		}
 	}
 	pr_info("end read");
@@ -133,7 +135,7 @@ static void print_device_tree_node(struct device_node *node, int depth)
 	for_each_child_of_node(node, child)
 	{
 		printk(KERN_INFO "%s{ name = %s\n", indent, child->name);
-		printk(KERN_INFO "%s  type = %s\n", indent, child->type);
+		printk(KERN_INFO "%s  full name = %s\n", indent, child->full_name);
 		for (properties = child->properties; properties != NULL; properties = properties->next)
 		{
 			printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
