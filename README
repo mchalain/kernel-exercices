@@ -5,6 +5,7 @@ Charger le premier module :
  > sudo insmod mydriver1.ko
 Charger le deuxième module :
  > sudo insmod mydriver2.ko
+Le driver cherche la fonction mydriver1_print.
 Ajouter la ligne EXPORT_SYMBOL_GPL dans mydriver1.ko.
 Recompiler les modules :
  > make
