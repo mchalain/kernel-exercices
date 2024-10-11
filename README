@@ -1,11 +1,14 @@
+Compilation dans des répertoires différents et
+usage de KBUILD_EXTRA_SYMBOLS
 Exercice 1 :
 Compiler les modules :
  > make
+ ERROR: modpost: "mydriver1_print" undefined!
+Ajouter la variable KBUILD_EXTRA_SYMBOLS lors de l'appel du Makefile de mydriver2
 Charger le premier module :
  > sudo insmod mydriver1.ko
 Charger le deuxième module :
  > sudo insmod mydriver2.ko
-Ajouter la ligne EXPORT_SYMBOL_GPL dans mydriver1.ko.
 Recompiler les modules :
  > make
 Charger les deux modules dans l'ordre :

@@ -1,19 +1,21 @@
-# Run this Makefile as follows:
-# (MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
-#
-
 KDIR= /lib/modules/$(shell uname -r)/build
 PWD= $(shell pwd)
-#KBUILD_EXTRA_SYMBOLS=$(PWD)/Module.symvers
+KBUILD_EXTRA_SYMBOLS=$(PWD)/mydriver1/Module.symvers
 
-all:
-	$(MAKE) -C $(KDIR) M=$(PWD) modules
+all: mydriver1 mydriver2
+
+.PHONY:mydriver1 mydriver2
+mydriver1:
+	$(MAKE) -C $(PWD)/mydriver1
+
+mydriver2:
+	$(MAKE) -C $(PWD)/mydriver2
 
 install:
-	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
-	depmod -a
+	$(MAKE) -C $(PWD)/mydriver1 install
+	$(MAKE) -C $(PWD)/mydriver2 install
 
 clean:
-	rm -f *~ Module.markers Modules.symvers
-	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	$(MAKE) -C $(PWD)/mydriver1 clean
+	$(MAKE) -C $(PWD)/mydriver2 clean
 
