@@ -109,7 +109,7 @@ static int my_probe(struct platform_device *dev)
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
 	if (ddata == NULL)
 	{
-		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
+		ddata = kzalloc(sizeof(*ddata), GFP_KERNEL);
 		ddata->pdev = dev;
 	}
 	pr_info("probe ddata %p\n",ddata);
@@ -136,6 +136,7 @@ static int my_remove(struct platform_device *dev)
 	{
 		pr_info("misc deregister\n");
 		misc_deregister(&ddata->misc);
+		kvfree(ddata);
 	}
 	return 0;
 }
