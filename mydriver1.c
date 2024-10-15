@@ -135,7 +135,7 @@ static int my_probe(struct platform_device *dev)
 		node = of_find_node_with_property(NULL, "string");
 		if (node)
 		{
-			ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
+			ddata = kzalloc(sizeof(*ddata), GFP_KERNEL);
 			of_property_read_string(node, "string", &ddata->string);
 		}
 	}
@@ -162,6 +162,7 @@ static int my_remove(struct platform_device *dev)
 	if (ddata)
 	{
 		misc_deregister(&ddata->misc);
+		kvfree(ddata);
 	}
 	return 0;
 }
