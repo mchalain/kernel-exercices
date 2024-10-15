@@ -149,7 +149,7 @@ static int my_probe(struct platform_device *dev)
 		struct miscdevice *misc = &ddata->misc;
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
-		misc->minor = 110 + mydevice_nb;
+		misc->minor = MISC_DYNAMIC_MINOR;
 		misc->name = ddata->name;
 		misc->fops = &my_fops;
 
