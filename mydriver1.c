@@ -26,7 +26,6 @@ MODULE_LICENSE("GPL");
 static LIST_HEAD(mydevice_list);
 static int mydevice_nb = 0;
 
-
 static void print_device_tree_node(struct device_node *node, int depth);
 /*
  * File operations
@@ -35,39 +34,9 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
 	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
 	int length = 0;
-	if (data->pdev)
-	{
-		unsigned long int start = 0, end = 0;
-		int i;
-		struct resource * res;
-		pr_info("nb resources %d\n", data->pdev->num_resources);
-
-		for (i = 0; i < data->pdev->num_resources; i++)
-		{
-			res = platform_get_resource(data->pdev, IORESOURCE_MEM, i);
-			if (res)
-			{
-				start = res->start;
-				end = res->end;
-				pr_info("reg %d : 0x%lX 0x%lX\n", i, start, end);
-				//void *mem = devm_ioremap_resource(&data->pdev->dev, res);
-			}
-		}
-		if (i == 0)
-		{
-			int len;
-			const __be32 *addr_be;
-			struct device_node *node = data->pdev->dev.of_node;
-			addr_be = of_get_property(node, "reg", &len);
-			if (addr_be)
-				start = be32_to_cpup(addr_be);
-		}
-
-		length = sprintf(buf, "reg 0x%lX 0x%lX\n", start, end);
-		if (data->read >= length)
-			return 0;
-		printk(KERN_INFO "my char driver: read(%d)\n", length);
-	}
+	length = sprintf(buf, "reg 0x%lX 0x%lX\n", data->memregion.start, data->memregion.end);
+	if (data->read >= length)
+		return 0;
 	count = length;
 	*ppos += count;
 	data->read += count;
@@ -157,10 +126,10 @@ static int my_probe(struct platform_device *dev)
 		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
 		ddata->pdev = dev;
 	}
-	pr_info("probe ddata %p\n",ddata);
+	dev_info(&dev->dev, "probe ddata %p\n",ddata);
 	if (ddata)
 	{
-		struct miscdevice *misc = &ddata->misc;
+		struct miscdevice *misc = vmalloc(sizeof(*misc));
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
 		misc->minor = MISC_DYNAMIC_MINOR;
@@ -168,18 +137,38 @@ static int my_probe(struct platform_device *dev)
 		misc->fops = &my_fops;
 
 		misc_register(misc);
-
+		dev_set_drvdata(&dev->dev, misc);
 		list_add(&ddata->list, &mydevice_list);
 	}
+	int i;
+	struct resource * res;
+	dev_info(&dev->dev, "nb resources %d\n", dev->num_resources);
+
+	for (i = 0; i < dev->num_resources; i++)
+	{
+		//ddata->memregion.mem = devm_platform_get_and_ioremap_resource(dev, i, &res);
+		// or
+		res = platform_get_resource(dev, IORESOURCE_MEM, i);
+		if (res)
+		{
+			ddata->memregion.start = res->start;
+			ddata->memregion.end = res->end;
+			dev_info(&dev->dev, "reg %d : 0x%lX 0x%lX\n", i, ddata->memregion.start, ddata->memregion.end);
+			//ddata->memregion.mem = devm_ioremap_resource(&dev->dev, res);
+			// or
+			//ddata->memregion.mem = devm_platform_ioremap_resource(dev, res);
+		}
+	}
+
 	return 0;
 }
 
 static int my_remove(struct platform_device *dev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev->dev.platform_data;
-	if (ddata)
+	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&dev->dev);
+	if (misc)
 	{
-		misc_deregister(&ddata->misc);
+		misc_deregister(misc);
 	}
 	return 0;
 }
