@@ -124,7 +124,7 @@ static int my_probe(struct platform_device *pdev)
 
 	if (res)
 	{
-		data = devm_kzalloc(&pdev->dev,sizeof(*data), GFP_KERNEL);
+		data = kzalloc(sizeof(*data), GFP_KERNEL);
 		snprintf(data->name, sizeof(data->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
 		data->misc.minor = 110 + mydevice_nb;
@@ -152,10 +152,7 @@ static int my_remove(struct platform_device *pdev)
 		{
 			misc_deregister(&data->misc);
 		}
-		/**
-		 * data is free with device structure
-		 */
-//		vfree(data);
+		kvfree(data);
 	}
 
 	return 0;
