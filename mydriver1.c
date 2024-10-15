@@ -127,7 +127,7 @@ static int my_probe(struct platform_device *pdev)
 		data = kzalloc(sizeof(*data), GFP_KERNEL);
 		snprintf(data->name, sizeof(data->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
-		data->misc.minor = 110 + mydevice_nb;
+		data->misc.minor = MISC_DYNAMIC_MINOR;
 		data->misc.name = data->name;
 		data->misc.fops = &my_fops;
 
