@@ -1,46 +1,6 @@
 Exercice 1:
- Compiler le driver:
- > make
- Charger le driver :
- > sudo insmod mydriver1.ko
- Charger les "overlays" dans configfs :
- > sudo dtoverlay mydevice1.dtbo
- Lire les valeurs de "reg"
- > cat /proc/device-tree/mydevice@1/data/reg | hexdump
- Lire le fichier caractère créé par miscdevice:
- > sudo cat /dev/mydriver0
-
-Exercice 2:
- Écrire le dts pour avoir un ID comme élément de reg.
- Cela sera utilisé pour définir une adresse sur un bus I2C par exemple.
- > cat mydevice2.1.dts
- Charger le dts :
- > sudo dtoverlay mydevice2.1.dtbo
- Lire le périphérique et les messages du noyau :
- > sudo cat /dev/mydriver1
- > sudo dmesg -c
-
-Exercice 3:
- Écrire le dts pour avoir une adresse de registre sur 64bits.
- > cat mydevice2.2.dts
- Charger le dts :
- > sudo dtoverlay mydevice2.2.dtbo
- Lire le périphérique et les messages du noyau :
- > sudo cat /dev/mydriver2
- > sudo dmesg -c
-
-Exercice 4:
- Écrire un dts pour avoir 2 plages de registres sur 32 bits
- > cat mydevice3.dts
- Charger le dts :
- > sudo dtoverlay mydevice3.dtbo
- Lire le périphérique et les messages du noyau :
- > sudo cat /dev/mydriver3
- > sudo dmesg -c
-
-Exercice 5:
- Ajouter la définition d'une interruption dans le dts :
-
- trouver la correction de l'exercice avec git checkout devicetree.5
+ Suivant les spécifications du composant proposé
+ utiliser devm_platform_get_and_ioremap pour créer
+ le driver.
 
 
