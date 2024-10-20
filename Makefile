@@ -11,6 +11,3 @@ install:
 clean:
 	rm -f *~ Module.markers Modules.symvers
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-
-%.dtbo: %.dts
-	dtc -O dtb -o $@ -@ $<
