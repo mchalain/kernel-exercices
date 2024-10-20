@@ -14,6 +14,7 @@
 #include <linux/of.h>
 
 #include <linux/gpio.h>
+#include <linux/interrupt.h>	
 
 #include "mydriver1.h"
 
@@ -28,6 +29,16 @@ MODULE_LICENSE("GPL");
 static LIST_HEAD(mydevice_list);
 static int mydevice_nb = 0;
 
+/**
+ * irq handler
+ */
+static irqreturn_t my_irq_handler(int irq, void * data)
+{
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)data;
+	ddata->count++;
+	return IRQ_HANDLED;
+}
+
 /*
  * File operations
  */
@@ -36,19 +47,22 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
 	struct platform_device *pdev = ddata->pdev;
 	dev_info(&pdev->dev, "read()\n");
-	size_t length = 2;
+	size_t length = 4;
 	int ret = 0;
 	if (ddata->read >= length)
 		return 0;
-	
-	if (count > 1)
+
+	ret = gpiod_get_raw_value(ddata->gpio);
+	if (count > 4)
 	{
 		if (ret < 10)
 			buf[0] = 0x30 + ret;
 		else if (ret < 0)
 			buf[0] = 'F';
-		buf[1] = 0;
-		length = 2;
+		buf[1] = ':';
+		buf[2] = 0x30 + (ddata->count & 0x09);
+		buf[3] = 0;
+		length = 4;
 	}
 	count = length;
 	*ppos += count;
@@ -135,7 +149,10 @@ static int my_probe(struct platform_device *pdev)
 		if (ddata->gpio > 0)
 		{
 			gpiod_direction_input(ddata->gpio);
+			ddata->irq = gpiod_to_irq(ddata->gpio);
 		}
+		if (ddata->irq > 0)
+			devm_request_irq(&pdev->dev, ddata->irq, my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, THIS_MODULE->name, ddata);
 	}
 
 	return 0;
@@ -143,11 +160,14 @@ static int my_probe(struct platform_device *pdev)
 
 static int my_remove(struct platform_device *pdev)
 {
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
 	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&pdev->dev);
 	if (misc)
 	{
 		misc_deregister(misc);
 	}
+	if (ddata->irq)
+		devm_free_irq(&pdev->dev, ddata->irq, ddata);
 	return 0;
 }
 

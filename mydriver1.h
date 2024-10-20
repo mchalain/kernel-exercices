@@ -9,6 +9,8 @@ struct mydriver1_data_t
 	int read;
 	struct list_head list;
 	struct gpio_desc *gpio;
+	int irq;
+	int count;
 };
 
 #endif
