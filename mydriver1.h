@@ -11,6 +11,9 @@ struct mydriver1_data_t
 	struct gpio_desc *gpio;
 	int irq;
 	int count;
+	int state;
+	struct tasklet_struct tasklet;
+	wait_queue_head_t wq;
 };
 
 #endif

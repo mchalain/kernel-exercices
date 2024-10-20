@@ -32,10 +32,21 @@ static int mydevice_nb = 0;
 /**
  * irq handler
  */
+#define CHANGED 0x80
+static void my_check(unsigned long data)
+{
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)data;
+	/* wake up */
+	ddata->state = gpiod_get_value(ddata->gpio);
+	ddata->count += ddata->state;
+	ddata->state |= CHANGED;
+	wake_up_interruptible (&ddata->wq);
+}
+
 static irqreturn_t my_irq_handler(int irq, void * data)
 {
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)data;
-	ddata->count++;
+	tasklet_schedule(&ddata->tasklet);
 	return IRQ_HANDLED;
 }
 
@@ -52,7 +63,17 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	if (ddata->read >= length)
 		return 0;
 
-	ret = gpiod_get_raw_value(ddata->gpio);
+	if ((file->f_flags & O_NONBLOCK) == 0)
+	{
+		ret = wait_event_interruptible(ddata->wq, ddata->state);
+		if (ret < 0) {
+			dev_info(&pdev->dev, "read() wake up by it\n");
+			return -ERESTARTSYS;
+		}
+	}
+	ddata->state &= ~CHANGED;
+
+	ret = ddata->state;
 	if (count > 4)
 	{
 		if (ret < 10)
@@ -137,13 +158,14 @@ static int my_probe(struct platform_device *pdev)
 
 		misc_register(misc);
 		dev_info(&pdev->dev, "misc minor %d\n", misc->minor);
-		dev_set_drvdata(&pdev->dev, misc);
 		ddata->misc = misc;
 		list_add(&ddata->list, &mydevice_list);
+		dev_set_drvdata(&pdev->dev, ddata);
 	}
 	of_property_read_string(pdev->dev.of_node, "devname", &string);
 	if (string != NULL && ddata)	
 	{
+		int ret = -1;
 		snprintf(ddata->name, sizeof(ddata->name), string);
 		ddata->gpio = devm_gpiod_get(&pdev->dev, string, GPIOD_OUT_HIGH);
 		if (ddata->gpio > 0)
@@ -152,7 +174,12 @@ static int my_probe(struct platform_device *pdev)
 			ddata->irq = gpiod_to_irq(ddata->gpio);
 		}
 		if (ddata->irq > 0)
-			devm_request_irq(&pdev->dev, ddata->irq, my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, THIS_MODULE->name, ddata);
+			ret = devm_request_irq(&pdev->dev, ddata->irq, my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING, THIS_MODULE->name, ddata);
+		if (ret == 0)
+		{
+			tasklet_init(&ddata->tasklet, my_check, (unsigned long)ddata);
+			init_waitqueue_head(&ddata->wq);
+		}
 	}
 
 	return 0;
@@ -160,14 +187,15 @@ static int my_probe(struct platform_device *pdev)
 
 static int my_remove(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
-	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&pdev->dev);
-	if (misc)
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_drvdata(&pdev->dev);
+	if (ddata->misc)
 	{
-		misc_deregister(misc);
+		dev_info(&pdev->dev, "remove device %d\n", ddata->misc->minor);
+		misc_deregister(ddata->misc);
 	}
 	if (ddata->irq)
 		devm_free_irq(&pdev->dev, ddata->irq, ddata);
+	tasklet_kill(&ddata->tasklet);
 	return 0;
 }
 
