@@ -13,6 +13,8 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 
+#include <linux/gpio.h>
+
 #include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
@@ -26,47 +28,61 @@ MODULE_LICENSE("GPL");
 static LIST_HEAD(mydevice_list);
 static int mydevice_nb = 0;
 
-static void print_device_tree_node(struct device_node *node, int depth);
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
-	int length = 0;
-	length = sprintf(buf, "reg 0x%lX 0x%lX\n", data->memregion.start, data->memregion.end);
-	if (data->read >= length)
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
+	struct platform_device *pdev = ddata->pdev;
+	dev_info(&pdev->dev, "read()\n");
+	size_t length = 2;
+	int ret = 0;
+	if (ddata->read >= length)
 		return 0;
+	
+	ret = gpiod_get_raw_value(ddata->gpio);
+	if (count > 1)
+	{
+		if (ret < 10)
+			buf[0] = 0x30 + ret;
+		else if (ret < 0)
+			buf[0] = 'F';
+		buf[1] = 0;
+		length = 2;
+	}
 	count = length;
 	*ppos += count;
-	data->read += count;
+	ddata->read += count;
 	return count;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: write()\n");
-	print_device_tree_node(of_find_node_by_path("/"), 3);
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
+	struct platform_device *pdev = ddata->pdev;
+	dev_info(&pdev->dev, "write()\n");
 	*ppos += count;
 	return count;
 }
 
 static int my_open(struct inode *inode, struct file *file)
 {
-	struct mydriver1_data_t *data = NULL, *pos;
+	struct mydriver1_data_t *ddata = NULL, *pos;
 	list_for_each_entry(pos, &mydevice_list, list)
 	{
 		if (pos->misc->minor == iminor(inode))
 		{
-			data = pos;
+			ddata = pos;
 			break;
 		}
 	}
-	if (data)
+	if (ddata)
 	{
-		data->read = 0;
-		file->private_data = data;
-		printk(KERN_INFO "my char driver: open()\n");
+		struct platform_device *pdev = ddata->pdev;
+		ddata->read = 0;
+		file->private_data = ddata;
+		dev_info(&pdev->dev, "open()\n");
 		return 0;
 	}
 	return EBUSY;
@@ -87,39 +103,9 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
-static void print_device_tree_node(struct device_node *node, int depth)
-{
-	int i = 0;
-	struct device_node *child;
-	struct property    *properties;
-	char                indent[255] = "";
-
-	for(i = 0; i < depth * 3; i++)
-	{
-		indent[i] = ' ';
-	}
-	indent[i] = '\0';
-	++depth;
-
-	for (properties = node->properties; properties != NULL; properties = properties->next)
-	{
-		printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
-	}
-	for_each_child_of_node(node, child)
-	{
-		printk(KERN_INFO "%s{ name = %s\n", indent, child->name);
-		printk(KERN_INFO "%s  full name = %s\n", indent, child->full_name);
-		for (properties = child->properties; properties != NULL; properties = properties->next)
-		{
-			printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
-		}
-		print_device_tree_node(child, depth);
-		printk(KERN_INFO "%s}\n", indent);
-	}
-}
-
 static int my_probe(struct platform_device *pdev)
 {
+	const char * string = NULL;
 	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
 	if (ddata == NULL)
 	{
@@ -142,23 +128,14 @@ static int my_probe(struct platform_device *pdev)
 		ddata->misc = misc;
 		list_add(&ddata->list, &mydevice_list);
 	}
-	int i;
-	struct resource * res;
-	dev_info(&pdev->dev, "nb resources %d\n", pdev->num_resources);
-
-	for (i = 0; i < pdev->num_resources; i++)
+	of_property_read_string(pdev->dev.of_node, "devname", &string);
+	if (string != NULL && ddata)	
 	{
-		//ddata->memregion.mem = devm_platform_get_and_ioremap_resource(dev, i, &res);
-		// or
-		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
-		if (res)
+		snprintf(ddata->name, sizeof(ddata->name), string);
+		ddata->gpio = devm_gpiod_get(&pdev->dev, string, GPIOD_OUT_HIGH);
+		if (ddata->gpio > 0)
 		{
-			ddata->memregion.start = res->start;
-			ddata->memregion.end = res->end;
-			dev_info(&pdev->dev, "reg %d : 0x%lX 0x%lX\n", i, ddata->memregion.start, ddata->memregion.end);
-			//ddata->memregion.mem = devm_ioremap_resource(&dev->dev, res);
-			// or
-			//ddata->memregion.mem = devm_platform_ioremap_resource(dev, res);
+			gpiod_direction_input(ddata->gpio);
 		}
 	}
 

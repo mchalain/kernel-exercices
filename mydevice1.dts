@@ -6,7 +6,8 @@
 		__overlay__ {
 			mydevice@1 {
 				compatible = "example,mydriver1";
-				reg = <0x1000 0x10>;
+				devname = "mydevice1";
+				mydevice1-gpios  = <&gpio 26 0>;
 			};
 		};
 	};

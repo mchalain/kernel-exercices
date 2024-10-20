@@ -8,7 +8,7 @@ struct mydriver1_data_t
 	struct platform_device *pdev;
 	int read;
 	struct list_head list;
-	struct { unsigned long int start; unsigned long int end; void *mem;} memregion;
+	struct gpio_desc *gpio;
 };
 
 #endif
