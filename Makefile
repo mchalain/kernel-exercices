@@ -13,5 +13,3 @@ clean:
 	rm -f *.dtbo
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
 
-%.dtbo: %.dts
-	dtc -O dtb -o $@ -@ $<
