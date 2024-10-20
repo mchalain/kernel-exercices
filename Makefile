@@ -12,6 +12,3 @@ clean:
 	rm -f *~ Module.markers Modules.symvers
 	rm -f *.dtbo
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
-
-%.dtbo: %.dts
-	dtc -O dtb -o $@ -@ $<
