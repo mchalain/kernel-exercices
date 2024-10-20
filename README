@@ -1,7 +1,5 @@
-The first step is to retrieve the GPIO from the devicetree.
-After to request this GPIO, anyother driver are not able to attach to it.
-The GPIO must be set as an input or an output (here as input to read the value.
-The state of the GPIO must be read when the user reads on the misc interface.
+The GPIO is set as an IRQ and a handler is atttached to it.
+
 Exercice 1:
  Build the driver:
   > make
@@ -14,6 +12,5 @@ Exercice 1:
  read the GPIO state:
   > cat /dev/mydriver0
 
-The current driver return alway 0, looks for the function to use and place it,
-into the good function.
-
+The handler is called every time even if the device is closed.
+Change the place of request_irq into the open function.
