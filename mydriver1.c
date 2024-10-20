@@ -16,7 +16,7 @@
 #include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
-MODULE_AUTHOR("Marc Chalain, Smile ECS");
+MODULE_AUTHOR("Marc Chalain");
 MODULE_LICENSE("GPL");
 
 /*
@@ -56,7 +56,7 @@ static int my_open(struct inode *inode, struct file *file)
 	struct mydriver1_data_t *data = NULL, *pos;
 	list_for_each_entry(pos, &mydevice_list, list)
 	{
-		if (pos->misc.minor == iminor(inode))
+		if (pos->misc->minor == iminor(inode))
 		{
 			data = pos;
 			break;
@@ -118,18 +118,18 @@ static void print_device_tree_node(struct device_node *node, int depth)
 	}
 }
 
-static int my_probe(struct platform_device *dev)
+static int my_probe(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
 	if (ddata == NULL)
 	{
-		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
-		ddata->pdev = dev;
+		ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+		ddata->pdev = pdev;
 	}
-	dev_info(&dev->dev, "probe ddata %p\n",ddata);
+	dev_info(&pdev->dev, "probe ddata %p\n",ddata);
 	if (ddata)
 	{
-		struct miscdevice *misc = vmalloc(sizeof(*misc));
+		struct miscdevice *misc = devm_kmalloc(&pdev->dev, sizeof(*misc), GFP_KERNEL);
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
 		misc->minor = MISC_DYNAMIC_MINOR;
@@ -137,23 +137,25 @@ static int my_probe(struct platform_device *dev)
 		misc->fops = &my_fops;
 
 		misc_register(misc);
-		dev_set_drvdata(&dev->dev, misc);
+		dev_info(&pdev->dev, "misc minor %d\n", misc->minor);
+		dev_set_drvdata(&pdev->dev, misc);
+		ddata->misc = misc;
 		list_add(&ddata->list, &mydevice_list);
 	}
 	int i;
 	struct resource * res;
-	dev_info(&dev->dev, "nb resources %d\n", dev->num_resources);
+	dev_info(&pdev->dev, "nb resources %d\n", pdev->num_resources);
 
-	for (i = 0; i < dev->num_resources; i++)
+	for (i = 0; i < pdev->num_resources; i++)
 	{
 		//ddata->memregion.mem = devm_platform_get_and_ioremap_resource(dev, i, &res);
 		// or
-		res = platform_get_resource(dev, IORESOURCE_MEM, i);
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
 		if (res)
 		{
 			ddata->memregion.start = res->start;
 			ddata->memregion.end = res->end;
-			dev_info(&dev->dev, "reg %d : 0x%lX 0x%lX\n", i, ddata->memregion.start, ddata->memregion.end);
+			dev_info(&pdev->dev, "reg %d : 0x%lX 0x%lX\n", i, ddata->memregion.start, ddata->memregion.end);
 			//ddata->memregion.mem = devm_ioremap_resource(&dev->dev, res);
 			// or
 			//ddata->memregion.mem = devm_platform_ioremap_resource(dev, res);
@@ -163,9 +165,9 @@ static int my_probe(struct platform_device *dev)
 	return 0;
 }
 
-static int my_remove(struct platform_device *dev)
+static int my_remove(struct platform_device *pdev)
 {
-	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&dev->dev);
+	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&pdev->dev);
 	if (misc)
 	{
 		misc_deregister(misc);
