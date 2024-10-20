@@ -149,15 +149,15 @@ static void print_device_tree_node(struct device_node *node, int depth)
 	}
 }
 
-static int my_probe(struct platform_device *dev)
+static int my_probe(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&dev->dev);
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
 	if (ddata == NULL)
 	{
-		ddata = devm_kzalloc(&dev->dev, sizeof(*ddata), GFP_KERNEL);
-		ddata->pdev = dev;
+		ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
+		ddata->pdev = pdev;
 	}
-	pr_info("probe ddata %p\n",ddata);
+	dev_info(&pdev->dev, "probe ddata %p\n",ddata);
 	if (ddata)
 	{
 		struct miscdevice *misc = &ddata->misc;
