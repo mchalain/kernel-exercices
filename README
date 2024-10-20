@@ -1,6 +1,19 @@
+The first step is to retrieve the GPIO from the devicetree.
+After to request this GPIO, anyother driver are not able to attach to it.
+The GPIO must be set as an input or an output (here as input to read the value.
+The state of the GPIO must be read when the user reads on the misc interface.
 Exercice 1:
- Suivant les spécifications du composant proposé
- utiliser devm_platform_get_and_ioremap pour créer
- le driver.
+ Build the driver:
+  > make
+ upload the driver and the dtbo on the target
+  > scp *.dtbo *.ko root@<addr>:~
+ load the driver
+  > insmod mydriver1.ko
+ load the device tree overlay
+  > dtoverlay mydevice1.dtbo
+ read the GPIO state:
+  > cat /dev/mydriver0
 
+The current driver return alway 0, looks for the function to use and place it,
+into the good function.
 

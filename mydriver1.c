@@ -41,7 +41,6 @@ static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 	if (ddata->read >= length)
 		return 0;
 	
-	ret = gpiod_get_raw_value(ddata->gpio);
 	if (count > 1)
 	{
 		if (ret < 10)
