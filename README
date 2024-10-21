@@ -1,6 +1,19 @@
+This driver reads a register range address from the devicetree.
+It creates a parameter to set the offset into this range.
+And /dev/mydriveX allows to read/write this register.
+
 Exercice 1:
- Suivant les spécifications du composant proposé
- utiliser devm_platform_get_and_ioremap pour créer
- le driver.
-
-
+  build the driver:
+   > make
+  push the driver on the target
+   > scp *.ko *.dtbo root@<addr>:~
+  load the driver on the target
+   > insmod mydriver1.ko
+  load the DT overlay on the target
+   > dtoverlay mydevice1.dtbo
+  select a register offset
+   > echo 0x40 > /sys/devices/platform/7e300000.mydevice/driver/module/parameters/offset
+  read the driver
+   > cat /dev/mydriver0
+  change the offset and read the new value
+  as you can see, it is hasardous to access on a hardware with out knowledge about it.
