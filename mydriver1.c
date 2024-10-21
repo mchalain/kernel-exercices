@@ -13,6 +13,8 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 
+#include <linux/io.h>
+
 #include "mydriver1.h"
 
 MODULE_DESCRIPTION("mydriver1");
@@ -23,49 +25,73 @@ MODULE_LICENSE("GPL");
  * Arguments
  */
 
+static unsigned long offset = 0;
+module_param(offset, ulong, 0644);
+
 static LIST_HEAD(mydevice_list);
 static int mydevice_nb = 0;
 
-static void print_device_tree_node(struct device_node *node, int depth);
 /*
  * File operations
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	struct mydriver1_data_t *data = (struct mydriver1_data_t *)file->private_data;
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
+	dev_info(&ddata->pdev->dev, "read()\n");
 	int length = 0;
-	length = sprintf(buf, "reg 0x%lX 0x%lX\n", data->memregion.start, data->memregion.end);
-	if (data->read >= length)
+	//uint32_t value = *((uint32_t*)ddata->memregion.mem + offset);
+	uint32_t value = readl(ddata->memregion.mem + offset);
+	length = snprintf(buf, count, "reg %#lX %#X\n", ddata->memregion.start + offset, value);
+	if (ddata->read >= length)
 		return 0;
+	dev_info(&ddata->pdev->dev, "read(%#lX, %#X)\n", offset, value);
 	count = length;
 	*ppos += count;
-	data->read += count;
+	ddata->read += count;
 	return count;
 }
 
 static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 {
-	printk(KERN_INFO "my char driver: write()\n");
-	print_device_tree_node(of_find_node_by_path("/"), 3);
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
+	dev_info(&ddata->pdev->dev, "write()\n");
+	if (count >= 9)
+	{
+		uint32_t value = 0;
+		for (int i = 0; i < 8; i++)
+		{
+			if (buf[i] > 0x29 && buf[i] < 0x40)
+				value |= (buf[i] - 0x30) & 0x0F;
+			if (buf[i] >= 'a' && buf[i] < 'g')
+				value |= (buf[i] - 'a') & 0x0F;
+			if (buf[i] >= 'A' && buf[i] < 'G')
+				value |= (buf[i] - 'A') & 0x0F;
+			value <<= 4;
+		}
+		dev_info(&ddata->pdev->dev, "write(%#lX, %#X)\n", offset, value);
+		 *((uint32_t*)ddata->memregion.mem + offset) = value;
+	}
 	*ppos += count;
 	return count;
 }
 
 static int my_open(struct inode *inode, struct file *file)
 {
-	struct mydriver1_data_t *data = NULL, *pos;
+	struct mydriver1_data_t *ddata = NULL, *pos;
 	list_for_each_entry(pos, &mydevice_list, list)
 	{
 		if (pos->misc->minor == iminor(inode))
 		{
-			data = pos;
+			ddata = pos;
 			break;
 		}
 	}
-	if (data)
+	if (ddata)
 	{
-		data->read = 0;
-		file->private_data = data;
+		ddata->read = 0;
+		file->private_data = ddata;
+		if (ddata->memregion.mem == NULL)
+			ddata->memregion.mem = ioremap(ddata->memregion.start, ddata->memregion.end - ddata->memregion.start);
 		printk(KERN_INFO "my char driver: open()\n");
 		return 0;
 	}
@@ -74,8 +100,9 @@ static int my_open(struct inode *inode, struct file *file)
 
 static int my_release(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "my char driver: release()\n");
-
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)file->private_data;
+	dev_info(&ddata->pdev->dev, "release()\n");
+	iounmap(ddata->memregion.mem);
 	return 0;
 }
 
@@ -87,48 +114,15 @@ static struct file_operations my_fops = {
 	.release =	my_release,
 };
 
-static void print_device_tree_node(struct device_node *node, int depth)
-{
-	int i = 0;
-	struct device_node *child;
-	struct property    *properties;
-	char                indent[255] = "";
-
-	for(i = 0; i < depth * 3; i++)
-	{
-		indent[i] = ' ';
-	}
-	indent[i] = '\0';
-	++depth;
-
-	for (properties = node->properties; properties != NULL; properties = properties->next)
-	{
-		printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
-	}
-	for_each_child_of_node(node, child)
-	{
-		printk(KERN_INFO "%s{ name = %s\n", indent, child->name);
-		printk(KERN_INFO "%s  full name = %s\n", indent, child->full_name);
-		for (properties = child->properties; properties != NULL; properties = properties->next)
-		{
-			printk(KERN_INFO "%s  %s (%d)\n", indent, properties->name, properties->length);
-		}
-		print_device_tree_node(child, depth);
-		printk(KERN_INFO "%s}\n", indent);
-	}
-}
-
 static int my_probe(struct platform_device *pdev)
 {
-	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_platdata(&pdev->dev);
-	if (ddata == NULL)
-	{
-		ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-		ddata->pdev = pdev;
-	}
-	dev_info(&pdev->dev, "probe ddata %p\n",ddata);
+	struct mydriver1_data_t *ddata;
+	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
 	if (ddata)
 	{
+		ddata->pdev = pdev;
+		dev_info(&pdev->dev, "probe ddata %p\n",ddata);
+
 		struct miscdevice *misc = devm_kmalloc(&pdev->dev, sizeof(*misc), GFP_KERNEL);
 		snprintf(ddata->name, sizeof(ddata->name), "mydriver%d", mydevice_nb % 100);
 		mydevice_nb++;
@@ -138,9 +132,20 @@ static int my_probe(struct platform_device *pdev)
 
 		misc_register(misc);
 		dev_info(&pdev->dev, "misc minor %d\n", misc->minor);
-		dev_set_drvdata(&pdev->dev, misc);
+		dev_set_drvdata(&pdev->dev, ddata);
 		ddata->misc = misc;
 		list_add(&ddata->list, &mydevice_list);
+	}
+	const char *string = NULL;
+	struct device_node *node = ddata->pdev->dev.of_node;
+	if (of_find_property(node, "chipname", NULL) == NULL)
+	{
+		node  = of_find_node_with_property(node, "chipname");
+	}
+	of_property_read_string(node, "chipname", &string);
+	if (string)
+	{
+		dev_info(&pdev->dev, "access to %s\n", string);
 	}
 	int i;
 	struct resource * res;
@@ -151,7 +156,7 @@ static int my_probe(struct platform_device *pdev)
 		//ddata->memregion.mem = devm_platform_get_and_ioremap_resource(dev, i, &res);
 		// or
 		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
-		if (res)
+		if (res && ddata)
 		{
 			ddata->memregion.start = res->start;
 			ddata->memregion.end = res->end;
@@ -167,10 +172,10 @@ static int my_probe(struct platform_device *pdev)
 
 static int my_remove(struct platform_device *pdev)
 {
-	struct miscdevice *misc = (struct miscdevice *)dev_get_drvdata(&pdev->dev);
-	if (misc)
+	struct mydriver1_data_t *ddata = (struct mydriver1_data_t *)dev_get_drvdata(&pdev->dev);
+	if (ddata->misc)
 	{
-		misc_deregister(misc);
+		misc_deregister(ddata->misc);
 	}
 	return 0;
 }

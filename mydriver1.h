@@ -9,6 +9,7 @@ struct mydriver1_data_t
 	int read;
 	struct list_head list;
 	struct { unsigned long int start; unsigned long int end; void *mem;} memregion;
+	uint32_t offset;
 };
 
 #endif

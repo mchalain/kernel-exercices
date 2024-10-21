@@ -6,8 +6,8 @@
 		__overlay__ {
 			mydevice@1 {
 				compatible = "example,mydriver1";
-				reg = <0x7e205000 0x200>;
-				chipname = "i2c";
+				reg = <0x7e300000 0x100>;
+				chipname = "sdhci";
 			};
 		};
 	};
