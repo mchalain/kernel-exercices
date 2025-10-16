@@ -38,12 +38,18 @@ static int __init my_init(void)
 	my_str[0] = vmalloc(my_size);
 	memset(my_str[0], 'A', my_size);
 	printk(KERN_INFO"vmalloc allocated at        %p\n", my_str[0]);
+	my_str[5] = vmalloc(my_size);
+	memset(my_str[5], 'F', my_size);
+	printk(KERN_INFO"vmalloc 2 allocated at      %p\n", my_str[5]);
 	my_str[1] = kmalloc(my_size, GFP_KERNEL);
 	memset(my_str[1], 'B', my_size);
 	printk(KERN_INFO"kmalloc KERNEL allocated at %p\n", my_str[1]);
 	my_str[2] = kmalloc(my_size, GFP_USER);
 	memset(my_str[2], 'C', my_size);
 	printk(KERN_INFO"kmalloc USER allocated at   %p\n", my_str[2]);
+	my_str[6] = kmalloc(my_size, GFP_USER);
+	memset(my_str[6], 'G', my_size);
+	printk(KERN_INFO"kmalloc USER 2 allocated at %p\n", my_str[6]);
 	my_str[3] = kmalloc(my_size, GFP_DMA);
 	memset(my_str[3], 'D', my_size);
 	printk(KERN_INFO"kmalloc DMA allocated at    %p\n", my_str[3]);
@@ -56,8 +62,10 @@ static int __init my_init(void)
 static void __exit my_exit(void)
 {
 	vfree(my_str[0]);
+	vfree(my_str[5]);
 	kfree(my_str[1]);
 	kfree(my_str[2]);
+	kfree(my_str[6]);
 	kfree(my_str[3]);
 	kfree(my_str[4]);
 }
