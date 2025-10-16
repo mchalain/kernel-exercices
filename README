@@ -2,28 +2,17 @@ Exercice 1 :
 Compiler les modules :
  > make
 Charger le premier module :
- > sudo insmod mydriver1.ko message=\"Bonjour le monde\"
+ > sudo insmod mydriver1.ko message_size=10
 Charger le deuxième module :
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
- Bonjour le monde
- > cat /sys/modules/mydriver1/parameters/message
- Bonjour le monde
+ AAAAAAAAAA
+ > cat /sys/modules/mydriver1/parameters/message_size
+ 10
  > sudo rmmod mydriver2
- > echo coucou| sudo tee /sys/modules/mydriver1/parameters/message
+ > echo 2| sudo tee /sys/modules/mydriver1/parameters/message
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
- coucou
+ AAAAAAAAAA
  >
 
-Créer un paramètre de type entier et afficher son contenu.
-Recompiler les modules :
- > make
-Charger les deux modules dans l'ordre :
- > sudo insmod mydriver1.ko
- > sudo insmod mydriver2.ko
-
-Exercice 2:
- Créer un module de type charactère.
-
- continuer avec git checkout chardriver.0

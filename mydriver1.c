@@ -3,15 +3,17 @@
  */
 #include <linux/kernel.h>	/* printk() */
 #include <linux/module.h>	/* modules */
+#include <linux/vmalloc.h>	/* memory allocation */
 
 MODULE_DESCRIPTION("mydriver1");
 MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
-static char my_str[256] = "Enter in a function of mydriver1";
-module_param_string(message, my_str, sizeof(my_str), 0644);
-MODULE_PARM_DESC(message,"Une chaîne de caractères");
+static int my_size = 9;
+module_param_named(message_size, my_size, int, 0644);
+MODULE_PARM_DESC(message_size,"La taille du message");
 
+static char *my_str = NULL;
 /*
  * Arguments
  */
@@ -28,11 +30,15 @@ EXPORT_SYMBOL(mydriver1_print);
  */
 static int __init my_init(void)
 {
+	my_str = vmalloc(my_size);
+	memset(my_str, 'A', my_size);
+	printk(KERN_INFO"Memory allocated at %p\n", my_str);
 	return 0;
 }
 
 static void __exit my_exit(void)
 {
+	vfree(my_str);
 }
 
 /*
