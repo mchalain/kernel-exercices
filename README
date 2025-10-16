@@ -2,17 +2,13 @@ Exercice 1 :
 Compiler les modules :
  > make
 Charger le premier module :
- > sudo insmod mydriver1.ko message_size=10
-Charger le deuxième module :
- > sudo insmod mydriver2.ko
+ > sudo insmod mydriver1.ko 
  > sudo dmesg -c
- AAAAAAAAAA
- > cat /sys/modules/mydriver1/parameters/message_size
- 10
- > sudo rmmod mydriver2
- > echo 2| sudo tee /sys/modules/mydriver1/parameters/message
- > sudo insmod mydriver2.ko
- > sudo dmesg -c
- AAAAAAAAAA
- >
+ vmalloc allocated at        0000000015b90711
+ kmalloc KERNEL allocated at 00000000af0c83ee
+ kmalloc USER allocated at   000000005aeea90b
+ kmalloc DMA allocated at    000000002c226bcc
+ kmalloc ATOMIC allocated at 00000000baa4134a
 
+Ajouter 1 ou 2 nouvels espaces memoires en USER et vmalloc
+Interpréter les valeurs.
