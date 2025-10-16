@@ -2,9 +2,19 @@ Exercice 1 :
 Compiler les modules :
  > make
 Charger le premier module :
- > sudo insmod mydriver1.ko
+ > sudo insmod mydriver1.ko message=\"Bonjour le monde\"
 Charger le deuxième module :
  > sudo insmod mydriver2.ko
+ > sudo dmesg -c
+ Bonjour le monde
+ > cat /sys/modules/mydriver1/parameters/message
+ Bonjour le monde
+ > sudo rmmod mydriver2
+ > echo coucou| sudo tee /sys/modules/mydriver1/parameters/message
+ > sudo insmod mydriver2.ko
+ > sudo dmesg -c
+ coucou
+ >
 
 Créer un paramètre de type entier et afficher son contenu.
 Recompiler les modules :
