@@ -22,7 +22,7 @@ static struct miscdevice mymisc;
 static int gpio_nr = 21;
 module_param(gpio_nr, int, 0644);
 
-static int clic = 0;
+static u32 clic = 0;
 static irqreturn_t my_irq_handler(int irq, void * ident)
 {
 	clic ++;
@@ -34,7 +34,24 @@ static irqreturn_t my_irq_handler(int irq, void * ident)
  */
 static ssize_t my_read(struct file *file, char *buf, size_t count, loff_t *ppos)
 {
-	count = sprintf(buf, "%d\n", clic);
+	int i = 0;
+	if (*ppos > 9)
+		return 0;
+	copy_to_user(buf, "nb click ", 9);
+	count += 9;
+	for (i = 0; i < 8; i++)
+	{
+		char c = (clic >> (i * 4)) & 0x0f;
+		if (c < 0x0a)
+			c += 0x30;
+		else
+			c += 0x40 - 0x0a;
+		copy_to_user(buf + count, &c, 1);
+		count += 1;
+	}
+	copy_to_user(buf + count, "\n", 1);
+	count += 1;
+	printk(KERN_INFO "gpio(%d) nb click %u\n", gpio_nr - 512, clic);
 	*ppos += count;
 	return count;
 }
@@ -47,15 +64,11 @@ static ssize_t my_write(struct file *file, const char *buf, size_t count, loff_t
 
 static int my_open(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "my char driver: open()\n");
-	clic = 0;
 	return 0;
 }
 
 static int my_release(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "my char driver: release()\n");
-
 	return 0;
 }
 
@@ -75,6 +88,9 @@ static int __init my_init(void)
 	mymisc.name = "mydriver";
 	mymisc.fops = &my_fops;
 	ret = misc_register(&mymisc);
+
+	if (gpio_nr < 512)
+		gpio_nr += 512;
 
 	ret = gpio_request(gpio_nr, THIS_MODULE->name);
 	if (ret)
