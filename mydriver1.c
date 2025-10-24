@@ -77,10 +77,14 @@ static int __init my_init(void)
 	ret = misc_register(&mymisc);
 
 	ret = gpio_request(gpio_nr, THIS_MODULE->name);
+	if (ret)
+		pr_info("gpio(%d) request error\n", gpio_nr);
 	ret = gpio_direction_input(gpio_nr);
+	if (ret)
+		pr_info("gpio(%d) direction error\n", gpio_nr);
 	ret = request_irq(gpio_to_irq(gpio_nr), my_irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, THIS_MODULE->name, THIS_MODULE->name);
 	if (ret)
-		pr_info("error\n");
+		pr_info("gpio(%d) irq request error\n", gpio_nr);
 	return 0;
 }
 
