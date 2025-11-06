@@ -127,13 +127,7 @@ static struct i2c_driver my_i2c = {
 
 static int __init my_init(void)
 {
-	struct i2c_adapter *adapter;
-
 	i2c_register_driver(THIS_MODULE, &my_i2c);
-
-	adapter = i2c_get_adapter(1);
-	i2c_new_device(adapter, &my_boardinfo);
-
 	return 0;
 }
 
