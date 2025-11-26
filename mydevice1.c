@@ -21,6 +21,7 @@ static void my_release(struct device *dev)
 static struct platform_device my_device =
 {
 	.name = "mydriver1",
+	.id = 0,
 	.dev = {
 		.release = my_release,
 	},
