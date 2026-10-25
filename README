@@ -4,7 +4,7 @@ Compiler le module :
 Le charger :
  > sudo insmod mydriver1.ko
 Visualiser son chargement :
- > lsinfo
+ > lsmod
 Visualiser son action :
  > sudo dmesg -c
 Le décharger":
@@ -12,7 +12,7 @@ Le décharger":
 Visualiser son action :
  > sudo dmesg -c
 Visualiser les informations du driver :
- > modinfo mydriver1.ko
+ > sudo modinfo mydriver1.ko
 Installer le driver :
  > make modules_install
 Visualiser son installation :
