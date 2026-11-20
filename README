@@ -1,18 +1,19 @@
 Exercice 1 :
-Compiler les modules :
+Build the modules :
  > make
-Charger le premier module :
+Load the first module :
  > sudo insmod mydriver1.ko message_size=10
-Charger le deuxième module :
+Load the second module :
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
  AAAAAAAAAA
- > cat /sys/modules/mydriver1/parameters/message_size
+ > cat /sys/module/mydriver1/parameters/message_size
  10
  > sudo rmmod mydriver2
- > echo 2| sudo tee /sys/modules/mydriver1/parameters/message
+ > echo 2| sudo tee /sys/module/mydriver1/parameters/message
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
  AAAAAAAAAA
- >
+ The parameter is not refreshed, why ? How to change the message size ?
+
 

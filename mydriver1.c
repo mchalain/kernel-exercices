@@ -31,7 +31,8 @@ EXPORT_SYMBOL(mydriver1_print);
 static int __init my_init(void)
 {
 	my_str = vmalloc(my_size);
-	memset(my_str, 'A', my_size);
+	memset(my_str, 'A', my_size - 1);
+	my_str[my_size - 1] = '\0';
 	printk(KERN_INFO"Memory allocated at %p\n", my_str);
 	return 0;
 }
