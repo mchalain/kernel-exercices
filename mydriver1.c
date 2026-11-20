@@ -18,7 +18,7 @@ MODULE_LICENSE("GPL");
 
 #define GPIO_BASE_ADDR			(BCM2710_PERI_BASE + GPIO_BASE_OFFSET)
 #define GPIO_SIZE			0x40
-#define GPIO_FUNCSELECT_REG(pin)	(0x00 + ((pin) / 10) * 4)
+#define GPIO_FUNCSELECT_REG(pin)	(0x00 + ((pin) / 10))
 #define GPIO_FUNCSELECT_SHIFT(pin)	((pin % 10) * 3)
 #define GPIO_FUNCSELECT_MASK		0x7
 #define GPIO_LINE_SET(pin)		((0x1c / 4) + ((pin) / 32))
