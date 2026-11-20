@@ -56,7 +56,7 @@ static int __init my_init(void)
 	dev_t dev = 0;
 
 	my_minor_range = (my_minor_range > 10)?10:my_minor_range;
-	my_class = class_create(THIS_MODULE, "mydrivers");
+	my_class = class_create("mydrivers");
 
 	ret = alloc_chrdev_region(&dev, 0, my_minor_range, "mydrivers");
 	if (ret < 0) panic("Couldn't register /dev/tty driver\n"); 

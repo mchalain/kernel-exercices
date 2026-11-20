@@ -1,58 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #include "mydriver1.h"
 
 int main(int argc, char **argv)
 {
-	char *device = NULL;
-	int gpio_nr = 0;
-
-	int opt;
-	do
-	{
-		opt = getopt(argc, argv, "hd:");
-		switch (opt)
-		{
-			case 'h':
-				printf("%s -d <device path> -n <gpio number>", argv[0]);
-				exit(-1);
-			break;
-			case 'd':
-				device = optarg;
-			break;
-		}
-	} while(opt != -1);
-
-	if (device == NULL)
-		return -1;
-	int fd = open(device, O_RDWR);
-	if (fd > 0)
-	{
-		int ret;
-		int run = 1;
-		while (run)
-		{
-			int c = getchar();
-			switch (c)
-			{
-				case 'q':
-					run = 0;
-				break;
-				case '1':
-					ret = ioctl(fd, RPI_GPIO_SET, NULL);
-				break;
-				case '0':
-					ret = ioctl(fd, RPI_GPIO_CLEAR, NULL);
-				break;
-			}
-		}
-		close(fd);
+	if (! argv[1])
+		return 1;
+	int fd = open(argv[1], O_RDWR);
+	if (fd < 0) {
+		perror("open");
+		return 1;
 	}
+
+	for (int i = 0; i < 5; i++) {
+		ioctl(fd, RPI_GPIO_SET);
+		sleep(1);
+		ioctl(fd, RPI_GPIO_CLEAR);
+		sleep(1);
+	}
+
+	close(fd);
 	return 0;
 }

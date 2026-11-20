@@ -7,6 +7,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
+#include <linux/io.h>
 
 #include "myclass.h"
 #include "mydriver1.h"
@@ -16,7 +17,8 @@ MODULE_AUTHOR("Marc Chalain, Smile ECS");
 MODULE_LICENSE("GPL");
 
 #define BCM2708_PERI_BASE        0x20000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controler */
+#define BCM2710_PERI_BASE        0x3F000000
+#define GPIO_BASE                (BCM2710_PERI_BASE + 0x200000) /* GPIO controler */
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) 
 // or SET_GPIO_ALT(x,y)
