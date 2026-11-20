@@ -1,0 +1,10 @@
+Build the driver and the application:
+> make
+Load the driver:
+> insmod myclass.ko
+> insmod mydriver1.ko gpio_nr=17
+> dmesg -c
+> ls -l /dev/mydriver*
+Install a led on the GPIO 17:
+Launch the application:
+> myapp /dev/mydriver0
