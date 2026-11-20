@@ -1,16 +1,16 @@
 Exercice 1:
  Build the module
  > make
- Charger le module pour utiliser le GPIO 21 :
+ Charger le module pour utiliser le GPIO 17 :
  > sudo insmod myclass.ko
- > sudo insmod mydriver1.ko gpio_nr=21
+ > sudo insmod mydriver1.ko gpio_nr=17
  Changer la direction du GPIO depuis sysfs
  > sudo bash
  # echo 1 > /sys/module/mydriver1/parameters/gpio_dir
  Lire l'état du GPIO
  > sudo ./myapp -d /dev/mydriver0
  r
- Utiliser une résistance entre GPIO 21 et le 3.3V pour changer l'état.
+ Utiliser une résistance entre GPIO 17 et le 3.3V pour changer l'état.
 
 Exercice 2:
  Modifier le code pour connaitre l'état du GPIO avec la fonction "read".
@@ -21,7 +21,6 @@ Exercice 3:
  Solution de l'exercice avec git checkout irq.3
 
 Exercice 4:
- Modifier le driver pour être compatible avec la Raspberry Pi3.
  Utiliser pour cela l'API platform de Linux.
 
  Solution de l'exercie avec git checkout platform.rpi.1
