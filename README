@@ -1,0 +1,8 @@
+This module show how to build an Class driver in Object Linux programing
+Exercices:
+> make
+> insmod ./myclass.ko
+> insmod ./mydriver1.ko
+> dmesg -c
+> cat /dev/mydriver1
+> dmesg -c
