@@ -7,10 +7,10 @@ Charger le deuxième module :
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
  Bonjour le monde
- > cat /sys/modules/mydriver1/parameters/message
+ > cat /sys/module/mydriver1/parameters/message
  Bonjour le monde
  > sudo rmmod mydriver2
- > echo coucou| sudo tee /sys/modules/mydriver1/parameters/message
+ > echo coucou| sudo tee /sys/module/mydriver1/parameters/message
  > sudo insmod mydriver2.ko
  > sudo dmesg -c
  coucou
