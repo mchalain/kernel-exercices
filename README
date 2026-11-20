@@ -4,11 +4,11 @@ Compiler les modules :
 Charger le premier module :
  > sudo insmod mydriver1.ko 
  > sudo dmesg -c
- vmalloc allocated at        0000000015b90711
- kmalloc KERNEL allocated at 00000000af0c83ee
- kmalloc USER allocated at   000000005aeea90b
- kmalloc DMA allocated at    000000002c226bcc
- kmalloc ATOMIC allocated at 00000000baa4134a
+ vmalloc allocated at        0000000015b90711 | 0x414141413a029000
+ kmalloc KERNEL allocated at 00000000af0c83ee | 0x4242424201548040
+ kmalloc USER allocated at   000000005aeea90b | 0x4343434301548100
+ kmalloc DMA allocated at    000000002c226bcc | 0x44444444021a2000
+ kmalloc ATOMIC allocated at 00000000baa4134a | 0x4545454501548080
 
 Ajouter 1 ou 2 nouvels espaces memoires en USER et vmalloc
 Interpréter les valeurs.
