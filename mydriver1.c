@@ -37,19 +37,24 @@ EXPORT_SYMBOL(mydriver1_print);
 static int __init my_init(void)
 {
 	my_str[0] = vmalloc(my_size);
-	memset(my_str[0], 'A', my_size);
+	memset(my_str[0], 'A', my_size - 1);
+	my_str[0][my_size - 1] = '\0';
 	printk(KERN_INFO"vmalloc allocated at        0x%p | 0x%llx\n", my_str[0], virt_to_phys(my_str[0]));
 	my_str[1] = kmalloc(my_size, GFP_KERNEL);
-	memset(my_str[1], 'B', my_size);
+	memset(my_str[1], 'B', my_size - 1);
+	my_str[1][my_size - 1] = '\0';
 	printk(KERN_INFO"kmalloc KERNEL allocated at 0x%p | 0x%llx\n", my_str[1], virt_to_phys(my_str[1]));
 	my_str[2] = kmalloc(my_size, GFP_USER);
-	memset(my_str[2], 'C', my_size);
+	memset(my_str[2], 'C', my_size - 1);
+	my_str[2][my_size - 1] = '\0';
 	printk(KERN_INFO"kmalloc USER allocated at   0x%p | 0x%llx\n", my_str[2], virt_to_phys(my_str[2]));
 	my_str[3] = kmalloc(my_size, GFP_DMA);
-	memset(my_str[3], 'D', my_size);
+	memset(my_str[3], 'D', my_size - 1);
+	my_str[3][my_size - 1] = '\0';
 	printk(KERN_INFO"kmalloc DMA allocated at    0x%p | 0x%llx\n", my_str[3], virt_to_phys(my_str[3]));
 	my_str[4] = kmalloc(my_size, GFP_ATOMIC);
-	memset(my_str[4], 'E', my_size);
+	memset(my_str[4], 'E', my_size -1);
+	my_str[4][my_size - 1] = '\0';
 	printk(KERN_INFO"kmalloc ATOMIC allocated at 0x%p | 0x%llx\n", my_str[4], virt_to_phys(my_str[4]));
 
 	return 0;
